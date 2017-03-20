@@ -498,6 +498,59 @@ TRACKMENOT.TMNSearch = function() {
   return a;
 }
 
+    String.prototype.charAtIsUpper = function (atpos){
+      var chr = this.charAt(atpos);
+      return /[A-Z]|[\u0080-\u024F]/.test(chr) && chr === chr.toUpperCase();
+    };
+
+// sort array of words - puts Uppercase words first, digits last
+// Uppercase followed by Uppercase is strongest - most likely to be a keyword
+    function getKeywords(query) {
+        var queryWords = query.split(' ');
+        var i = queryWords.length;
+        var rank = new Array(queryWords.length);
+        var upper = new RegExp(/[A-Z]|[\u0080-\u024F]/);
+        var digit = new RegExp(/[0-9]/);
+
+        // debug('getKeywords: ' + query);
+        rank.fill(0);
+        while (i--) {
+            var word = queryWords[i]
+            if ( word.length < 1 ) {
+                rank[i] = -1;
+                continue;
+            }
+            // debug('getKeywords: ' + word);
+            var s = word.charAt(0);
+            if  ( s === s.toUpperCase() && upper.test(s) ) {
+                rank[i] = 1;
+            } else  if  ( digit.test(s) ) {
+                rank[i] = -1;
+            }
+        }
+        // debug('getKeywords: ' + rank);
+        i = queryWords.length - 1; 
+        while (i--) {
+            if ( rank[i] < 1 ) continue;
+            if ( rank[i+1] > 0 )
+                rank[i] += rank[i+1];
+        }
+        // debug('getKeywords: ' + rank);
+        i =  0;
+        var keyWords = [];
+        while (i < queryWords.length) {
+            if( rank[i] > 1 ) {
+                var keyword = queryWords.slice(i, i + rank[i]).join(' ');
+                // debug('getKeywords: ' + keyword);
+                keyWords.push(keyword);
+                i = i + rank[i];
+            } else { 
+                i = i + 1;
+            }
+        }
+        cout('getKeywords: keywords: ' + keyWords);
+        return keyWords;
+    }
 
     function monitorBurst() {
         chrome.webNavigation.onCommitted.addListener(function(e) {
@@ -812,22 +865,21 @@ TRACKMENOT.TMNSearch = function() {
         }
     }
 
-    // Not used anymore
+
     function getSubQuery(query) {
             // My fair guess estimated distribution of typical querry length
             var distribution = [1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
             var randomLength = distribution[roll(0, distribution.length -1)];
             var queryWords = query.split(' ');
             var randomWords = queryWords;
-            // randomly either get initial part of query or random words out of it
-            if (Math.random() < 0.3 ){
+            var keywords = getKeywords(query);
+            // randomly either get initial part of query, try keywords or random words out of it
+            if (Math.random() > 0.5 &&  keywords.length > 0 ){
+                randomWords = randomElement(keywords);
+            } else if (Math.random() < 0.3 ) { 
+                randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
+            } else {
                 randomWords = queryWords.slice(0, randomLength).join(' ');
-            }
-            else  {
-                randomWords = shuffleArray(queryWords); 
-                // shuffle but put uppercase first as they are more likely to be keywords
-                // this is silly idea - TODO
-                randomWords = randomWords.slice(0, randomLength).join(' ');
             }
             cout('getSubQuery: ' + randomWords);
             return randomWords
