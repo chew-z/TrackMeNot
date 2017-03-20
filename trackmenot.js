@@ -457,12 +457,10 @@ TRACKMENOT.TMNSearch = function() {
 
     function roll(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
-        // return Math.floor(Math.random() * (max + 1)) + min;
     }
 
 
     function randomElement(array) {
-        // cout("Array length: " + array.length)
         var index = roll(0, array.length - 1);
         cout('randomElement: ' + array[index]);
         return array[index];
@@ -482,23 +480,21 @@ function roll_gauss(min, max) {
 }
 
 
-function shuffle(array) {
-  var currentIndex = array.length, temporaryValue, randomIndex;
+function shuffleArray(a) {
+  var currentIndex = a.length, tempValue, randomIndex;
 
   // While there remain elements to shuffle...
   while (0 !== currentIndex) {
-
     // Pick a remaining element...
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex -= 1;
-
     // And swap it with the current element.
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
+    tempValue = a[currentIndex];
+    a[currentIndex] = a[randomIndex];
+    a[randomIndex] = tempValue;
   }
 
-  return array;
+  return a;
 }
 
 
@@ -580,18 +576,35 @@ function shuffle(array) {
     }
 
 
+    // here query randomization happens - but not really
+    // TODO - improve logic
+    // work on zeitgeist queries - 'facebook' - such query makes little sense alone
     function randomQuery() {
-        // here query randomization happens
-        var qtype = randomElement(typeoffeeds)
+        var qtype = randomElement(typeoffeeds)  // This should be weighted or changed- now some queries dominate others - for examole too many zeitgeist type queries
         cout('randomQuery: query type: ' + qtype);
         var queries = [];
-        if (qtype != 'zeitgeist' && qtype != 'extracted') {
+        var term = 'generic search term';
+        if (qtype == 'zeitgeist' ) {
+            queries = TMNQueries[qtype];
+            term = chomp(randomElement(queries)); 
+        }
+        else if (qtype == 'extracted') {
+            queries = TMNQueries[qtype];
+            term = chomp(randomElement(queries)); 
+            if (term.split(' ').length > 6 ) {
+                term = getSubQuery(term);
+            }
+        }
+        else {
             var queryset = TMNQueries[qtype];
-            queries = randomElement(queryset).words;
-        } else queries = TMNQueries[qtype];
-        var term = chomp(randomElement(queries));
+            queries = randomElement(queryset).words
+            term = chomp(randomElement(queries)); 
+        }
+        // var term = chomp(randomElement(queries));  // This is not enough - simply choosing random query
+        cout('randomQuery: term: ' + term);
         if (!term || term.length < 1)
-            throw new Error("queryIdx=" + queryIdx + " getQuery.term='" + term + "'");
+            throw new Error(" randomQuery: term='" + term);
+
         return term;
     }
 
@@ -609,6 +622,7 @@ function shuffle(array) {
         saveOptions();
     }
 
+     // extracts queries form HTML with search results 
     // Heavily fe-factored and more ideas yet
     // This if optimized for extracion from Google Search result pages
     function extractQueries(html) {
@@ -616,8 +630,6 @@ function shuffle(array) {
             cout("NO HTML!");
             return;
         }
-        // My estimated distribution of querry length
-        var distribution = [1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
         var possibleSearchResults = html.split("<span class=\"st\">")
         if (typeof TMNQueries.extracted == 'undefined') {
             TMNQueries.extracted = [];
@@ -625,12 +637,13 @@ function shuffle(array) {
         var i = possibleSearchResults.length;
         while (i--) {
             var singleSearchResult = possibleSearchResults[i].split('</span>')[0]
+            // cout('extractQueries: ' + singleSearchResult);
             if (singleSearchResult.length < 24 || singleSearchResult.length > 210) continue;
             if (singleSearchResult.indexOf('days ago') != -1 || singleSearchResult.indexOf('1 day ago') != -1 || singleSearchResult.indexOf('hours ago') != -1 || singleSearchResult.indexOf('1 hour ago') != -1) continue;
             if (singleSearchResult.indexOf('mins ago') != -1 || singleSearchResult.indexOf(' 201') != -1 | singleSearchResult.indexOf(' 200') != -1) continue;
             // remove remaining HTML  tags
             var cleanSearchResult = singleSearchResult.replace(/<(?:.|\n)*?>/gm, '');
-            cout('extractQueries: ' + cleanSearchResult);
+            // cout('extractQueries: ' + cleanSearchResult);
             // removes '&amp;', '&nbsp;' etc.
             cleanSearchResult = cleanSearchResult.replace(/&(.*?);/gm, '');
             // removes '-' and ',' '.'  '(' ')' '?'
@@ -639,31 +652,9 @@ function shuffle(array) {
             cleanSearchResult = cleanSearchResult.replace(/ and | with | a | an | any | it | has /gm, ' ');
             //  finally replace multiple spaces with single space
            cleanSearchResult = cleanSearchResult.replace( /\s\s+/g, ' ' );
-            var resultWords = cleanSearchResult.split(' ');
-            /* 
-            var j = resultWords.length;
-            var uppercaseWords = [];
-            while (j--) {
-                var firstLetter = resultWords[j].charAt(0);
-                if(firstLetter != firstLetter.toUpperCase()) continue;
-                uppercaseWords.push(resultWords[j]);
-            }
-            cout('extractQueries - Uppercase: ' +  uppercaseWords.join(' '));
-            */
-            /* Random words
-            var randomHalfLength = Math.floor((Math.random()  - 0.5)* Math.floor(resultWords.length/2));
-            var randomLength = Math.floor((Math.random() - 0.5) * resultWords.length);
-            var randomWords =  resultWords.slice(randomHalfLength, randomLength).join(' '); 
-            cout('extractQueries - random: ' + randomWords); 
-            */
-
-            // My intuition is that typical search length has different distribution then uniform
-            // TODO - better
-            var randomLength = distribution[roll(0, 15)];
-            var firstWords = resultWords.slice(0, randomLength).join(' ');
-            cout('extractQueries - shorted: ' + firstWords);
-
-            addQuery(firstWords, TMNQueries.extracted);
+           // return results
+           cout('extractQueries: cleaned: ' + cleanSearchResult);
+            addQuery(cleanSearchResult, TMNQueries.extracted);
         }
         //  Here ( why here ? ) we prune extracted queries
         // keeping maximum of 200
@@ -706,7 +697,7 @@ function shuffle(array) {
     function addQuery(term, queryList) {
         var noniso = new RegExp("[^a-zA-Z0-9_.\ \\u00C0-\\u00FF+]+", "g");
 
-        term = term.replace(noniso, '')
+        term = term.replace(noniso, '');
         term = chomp(term);
 
         if (isBlackList(term))
@@ -837,27 +828,28 @@ function shuffle(array) {
         }
     }
 
-    function getSubQuery(queryWords) {
-        var incQuery = "";
-        var randomArray = new Array();
-        for (var k = 0; k < queryWords.length; k++) {
-            randomIndex = roll(0, queryWords.length - 1);
-            if (randomArray.indexOf(randomIndex) < 0)
-                randomArray.push(randomIndex);
-        }
-        randomArray.sort()
-        for (k = 0; k < randomArray.length - 1 && k < 5; k++) {
-            incQuery += queryWords[randomArray[k]] + ' ';
-        }
-        incQuery += queryWords[randomArray[k]];
-        if (incQueries)
-            incQueries.push(chomp(incQuery));
+    // Not used anymore
+    function getSubQuery(query) {
+            // My fair guess estimated distribution of typical querry length
+            var distribution = [1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
+            var randomLength = distribution[roll(0, 15)];
+            var queryWords = query.split(' ');
+            var randomWords = queryWords;
+            if (Math.random() < 0.7 )
+                randomWords = resultWords.slice(0, randomLength).join(' ');
+            else  {
+                randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
+            }
+            cout('getSubQuery: ' + randomWords);
+            return randomWords
     }
 
     // Much shoter then original which had some weird logic here
     function getQuery() {
         var term = randomQuery();
         term = chomp(term);
+        if (Math.random() < 0.8) term = term.toLowerCase(); 
+        if (term[0] == ' ') term = term.substr(1); //remove the first space ;
         cout('getQuery: term: ' + term);
         return term;
     }
@@ -926,8 +918,6 @@ function shuffle(array) {
                 cout('sendQuery error! queryToSend is null')
                 return;
             }
-        if (Math.random() < 0.8) queryToSend = queryToSend.toLowerCase();
-        if (queryToSend[0] == ' ') queryToSend = queryToSend.substr(1); //remove the first space ;
 
         if (useTab) {
             if (getTMNTab() == -1) createTab();
