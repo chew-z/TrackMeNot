@@ -41,7 +41,8 @@ TRACKMENOT.TMNSearch = function() {
     var useBlackList = true;
     var useDHSList = false;
     var typeoffeeds = [];
-    var zeitgeist = ["facebook", "youtube", "netflix", "amazon", "grab", "Donald Trump", "7-Eleven", "Lee Chong Wei", "Nintendo Switch", "Google Pixel", "Emily Blunt", "JJ Lin", "Beauty and the Beast", "weather Bali", "hotels Thailand", "Bali flights", "Bangkok", "Denpasar", "Jakarta", "Lombok", "uber Kuta", "Air Asia", "Traveloka promo", "Tiger", "Chiangi", "Phuket", "Ko Samui", "hotel deals"]
+    // var zeitgeist = ["facebook", "youtube", "netflix", "amazon", "grab", "Donald Trump", "7-Eleven", "Lee Chong Wei", "Nintendo Switch", "Google Pixel", "Emily Blunt", "JJ Lin", "Beauty and the Beast", "weather Bali", "hotels Thailand", "Bali flights", "Bangkok", "Denpasar", "Jakarta", "Lombok", "uber Kuta", "Air Asia", "Traveloka promo", "Tiger", "Chiangi", "Phuket", "Ko Samui", "hotel deals"]
+    var zeitgeist = ["facebook","twitter","snap","instagram","youtube","netflix","amazon","spotify","google","grab","uber","iphone","macbook","laptop","games","weather","hotels","hotel","flights","deals","cheap","Bali","Thailand","Mexico","Dominicana","Bangkok","Denpasar","Lombok","Chiangi","JFK","Los Angeles","Phuket","Ko Samui","JJ Lin","Beauty and the Beast","UEFA","Air Asia","Traveloka","Tiger","Donald Trump","7-Eleven","Lee Chong Wei","Nintendo Switch","Google Pixel","Emily Blunt"]
     var tmn_timeout = 60000;
     var prev_engine = "None"
     var burstEngine = '';
@@ -429,7 +430,7 @@ TRACKMENOT.TMNSearch = function() {
             num += lower ? 87 : 55;
             id += String.fromCharCode(num);
         }
-        // cout("GENERATED ID="+id);
+        // debug("GENERATED ID="+id);
         return id;
     }
 
@@ -462,12 +463,12 @@ TRACKMENOT.TMNSearch = function() {
 
     function randomElement(array) {
         var index = roll(0, array.length - 1);
-        cout('randomElement: ' + array[index]);
+        // debug('randomElement: ' + array[index]);
         return array[index];
 }
 
 
-function box_muller() {
+    function box_muller() {
 // Normal distribution using Box-Muller transform.
     var u = 1 - Math.random(); // Subtraction to flip [0, 1) to (0, 1].
     var v = 1 - Math.random();
@@ -475,12 +476,12 @@ function box_muller() {
 }
 
 
-function roll_gauss(min, max) {
+    function roll_gauss(min, max) {
         return Math.floor(box_muller() * (max - min + 1)) + min;
 }
 
 
-function shuffleArray(a) {
+    function shuffleArray(a) {
   var currentIndex = a.length, tempValue, randomIndex;
 
   // While there remain elements to shuffle...
@@ -541,7 +542,7 @@ function shuffleArray(a) {
         for (var i = 0; i < engines.length; i++) {
             var eng = engines[i]
             var regex = eng.regexmap;
-            debug("  regex: " + regex + "  ->\n                   " + url);
+            // debug("  regex: " + regex + "  ->\n                   " + url);
             result = url.match(regex);
 
             if (result) {
@@ -576,39 +577,6 @@ function shuffleArray(a) {
     }
 
 
-    // here query randomization happens - but not really
-    // TODO - improve logic
-    // work on zeitgeist queries - 'facebook' - such query makes little sense alone
-    function randomQuery() {
-        var qtype = randomElement(typeoffeeds)  // This should be weighted or changed- now some queries dominate others - for examole too many zeitgeist type queries
-        cout('randomQuery: query type: ' + qtype);
-        var queries = [];
-        var term = 'generic search term';
-        if (qtype == 'zeitgeist' ) {
-            queries = TMNQueries[qtype];
-            term = chomp(randomElement(queries)); 
-        }
-        else if (qtype == 'extracted') {
-            queries = TMNQueries[qtype];
-            term = chomp(randomElement(queries)); 
-            if (term.split(' ').length > 6 ) {
-                term = getSubQuery(term);
-            }
-        }
-        else {
-            var queryset = TMNQueries[qtype];
-            queries = randomElement(queryset).words
-            term = chomp(randomElement(queries)); 
-        }
-        // var term = chomp(randomElement(queries));  // This is not enough - simply choosing random query
-        cout('randomQuery: term: ' + term);
-        if (!term || term.length < 1)
-            throw new Error(" randomQuery: term='" + term);
-
-        return term;
-    }
-
-
     function validateFeeds(param) {
         TMNQueries.rss = [];
         feedList = param.feeds;
@@ -622,7 +590,7 @@ function shuffleArray(a) {
         saveOptions();
     }
 
-     // extracts queries form HTML with search results 
+    // extracts queries from HTML with search results 
     // Heavily fe-factored and more ideas yet
     // This if optimized for extracion from Google Search result pages
     function extractQueries(html) {
@@ -637,13 +605,13 @@ function shuffleArray(a) {
         var i = possibleSearchResults.length;
         while (i--) {
             var singleSearchResult = possibleSearchResults[i].split('</span>')[0]
-            // cout('extractQueries: ' + singleSearchResult);
+            // debug('extractQueries: ' + singleSearchResult);
             if (singleSearchResult.length < 24 || singleSearchResult.length > 210) continue;
             if (singleSearchResult.indexOf('days ago') != -1 || singleSearchResult.indexOf('1 day ago') != -1 || singleSearchResult.indexOf('hours ago') != -1 || singleSearchResult.indexOf('1 hour ago') != -1) continue;
             if (singleSearchResult.indexOf('mins ago') != -1 || singleSearchResult.indexOf(' 201') != -1 | singleSearchResult.indexOf(' 200') != -1) continue;
             // remove remaining HTML  tags
             var cleanSearchResult = singleSearchResult.replace(/<(?:.|\n)*?>/gm, '');
-            // cout('extractQueries: ' + cleanSearchResult);
+            // debug('extractQueries: ' + cleanSearchResult);
             // removes '&amp;', '&nbsp;' etc.
             cleanSearchResult = cleanSearchResult.replace(/&(.*?);/gm, '');
             // removes '-' and ',' '.'  '(' ')' '?'
@@ -651,29 +619,55 @@ function shuffleArray(a) {
             // remove glue
             cleanSearchResult = cleanSearchResult.replace(/ and | with | a | an | any | it | has /gm, ' ');
             //  finally replace multiple spaces with single space
-           cleanSearchResult = cleanSearchResult.replace( /\s\s+/g, ' ' );
-           // return results
-           cout('extractQueries: cleaned: ' + cleanSearchResult);
+            cleanSearchResult = cleanSearchResult.replace( /\s\s+/g, ' ' );
+            // return results
+            cout('extractQueries: cleaned: ' + cleanSearchResult);
             addQuery(cleanSearchResult, TMNQueries.extracted);
         }
         //  Here ( why here ? ) we prune extracted queries
         // keeping maximum of 200
         while (TMNQueries.extracted.length > 200) {
-           // var rand = roll(0, TMNQueries.extracted.length - 1);
-          // TMNQueries.extracted.splice(rand, 1);
-
-           // Sort querrie by length and remove longest first (as they are most specific) TODO
-            TMNQueries.extracted.sort(function(a, b){
+           var rand = roll(0, TMNQueries.extracted.length - 1);
+           TMNQueries.extracted.splice(rand, 1);
+        // This logic here isn't so relevant as we now keep extracted queries long and trim them later
+        // Sort querrie by length and remove longest first (as they are most specific) TODO
+        //   TMNQueries.extracted.sort(function(a, b){
                       // ASC  -> a.length - b.length DESC -> b.length - a.length
-                      return b.length - a.length;
-                    })
-            TMNQueries.extracted.splice(0, TMNQueries.extracted.length -200);
-            // And to keep a balance ocasionally nuke last [shortest] queries as well
-            if (roll(0, 100) > 95) {
-                TMNQueries.extracted.splice(150, 50);
-            }
+        //             return b.length - a.length;
+        //         })
+        //   TMNQueries.extracted.splice(0, TMNQueries.extracted.length -200);
+        // And to keep a balance ocasionally nuke last [shortest] queries as well
+        //    if (roll(0, 100) > 95) {
+        //        TMNQueries.extracted.splice(150, 50);
+        //    }
         }
-        cout(TMNQueries.extracted);
+        // debug(TMNQueries.extracted);
+    }
+
+
+    // Extract titles from RSS feed - used as alternative to addRssTitles()
+    function extractRssTitles(xmlData, feedUrl) {
+        var rssTitles = "";
+        var feedTitles = xmlData.getElementsByTagName("title");
+        // debug(feedTitles);
+        if (!feedTitles || feedTitles.length < 2) {
+            cerr("no items(" + feedTitles + ") for rss-feed: " + feedUrl);
+            return 0;
+        }
+        var feedObject = {};
+        feedObject.name = feedTitles[0].firstChild.nodeValue;
+        feedObject.words = [];
+        // debug('addRSSTitles : ' + feedTitles[0].firstChild.nodeValue);
+        for (var i = 1; i < feedTitles.length; i++) {
+            if (feedTitles[i].firstChild) {
+                rssTitles = feedTitles[i].firstChild.nodeValue;
+            }
+            rssTitles = rssTitles.replace(/\d{1,3}\.\s/g, ''); //Leading numbers in lists like iTunes Top 100
+            addQuery(rssTitles, feedObject.words);
+        }
+        cout('addRSSTitles : ' + feedObject.name + " --- " + feedObject.words);
+        TMNQueries.rss.push(feedObject);
+        return 1;
     }
 
     function isBlackList(term) {
@@ -755,13 +749,13 @@ function shuffleArray(a) {
     }
 
 
-    // returns # of keywords added - No it doesn't, it returns 1
+    // returns # of keywords added - No it doesn't, it returns 0 or 1
     // TODO - the result is far from adding RSS titles. Works though.
     function addRssTitles(xmlData, feedUrl) {
         //cout('addRssTitles: ');
         var rssTitles = "";
         var feedTitles = xmlData.getElementsByTagName("title");
-        // cout(feedTitles);
+        // debug(feedTitles);
         if (!feedTitles || feedTitles.length < 2) {
             cerr("no items(" + feedTitles + ") for rss-feed: " + feedUrl);
             return 0;
@@ -806,7 +800,7 @@ function shuffleArray(a) {
         req.send(null);
     }
 
-    // This had been refactored significantly  as it had bugs and poor logic
+    // This had been refactored significantly as it had bugs and poor logic
     function doRssFetch(feedUrl) {
         cout('doRSSFetch: ' + feedUrl);
         try {
@@ -815,8 +809,9 @@ function shuffleArray(a) {
             req.onreadystatechange = function() {
                 if (req.readyState == 4 && req.status == 200 && req.responseXML != null) {
                     cout("doRSSFetch: Recieved feed from " + feedUrl);
-                    var adds = addRssTitles(req.responseXML, feedUrl);
-                    // cout(req.responseXML);
+                    // var adds = addRssTitles(req.responseXML, feedUrl);
+                    var adds = extractRssTitles(req.responseXML, feedUrl);
+                    // debug(req.responseXML);
                     //cout(req.responseText);
                 }
             }
@@ -835,8 +830,10 @@ function shuffleArray(a) {
             var randomLength = distribution[roll(0, 15)];
             var queryWords = query.split(' ');
             var randomWords = queryWords;
-            if (Math.random() < 0.7 )
-                randomWords = resultWords.slice(0, randomLength).join(' ');
+            // randomly either get initial part of query or random words out of it
+            if (Math.random() < 0.7 ){
+                randomWords = queryWords.slice(0, randomLength).join(' ');
+            }
             else  {
                 randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
             }
@@ -844,7 +841,50 @@ function shuffleArray(a) {
             return randomWords
     }
 
-    // Much shoter then original which had some weird logic here
+
+    // here query randomization happens - get random query type and select random query
+    // TODO - improve logic - already improved but ..
+    function randomQuery() {
+        var qtype = randomElement(typeoffeeds)  // This should be weighted or changed- now some queries dominate others - for examole too many zeitgeist type queries
+        cout('randomQuery: query type: ' + qtype);
+        var queries = [];
+        var term = 'generic search term';
+        if (qtype == 'zeitgeist' ) {
+            queries = TMNQueries[qtype];
+            term = randomElement(queries); 
+            // generic zeitgeist queries make no sense as results are too broad and queries seem unnatural
+            // like facebook vs facebook Prince or youtube vs youtube Ed Sheeran
+            var queryset = TMNQueries['rss'];
+            queries = randomElement(queryset).words
+            termVariation = getSubQuery(randomElement(queries));
+            term =  term + ' ' + termVariation;
+        }
+        if (qtype == 'extracted') {
+            queries = TMNQueries[qtype];
+            term = randomElement(queries); 
+            if (term.split(' ').length > 4 ) {
+                term = getSubQuery(term);
+            }
+        }
+        // rss queries
+        if (qtype != 'extracted' && qtype != 'zeitgeist' ) {
+            var queryset = TMNQueries[qtype];
+            queries = randomElement(queryset).words
+            term = randomElement(queries);
+            if (term.split(' ').length > 4 ) {
+                term = getSubQuery(term);
+            }
+        }
+        // var term = chomp(randomElement(queries));  // This is not enough - simply choosing random query
+        // debug('randomQuery: term: ' + term);
+        if (!term || term.length < 1)
+            throw new Error(" randomQuery: term='" + term);
+
+        return term;
+    }
+
+
+    // Much much shoter then original which had some weird logic here
     function getQuery() {
         var term = randomQuery();
         term = chomp(term);
@@ -950,7 +990,7 @@ function shuffleArray(a) {
                         clearTimeout(tmn_errTimeout);
                         reschedule();
                         cout("sendQuery: Recieved search results from " + queryUrl);
-                        // cout(req.responseXML);
+                        // debug(req.responseXML);
                         //cout(req.responseText);
                         var logEntry = {
                             type: 'query',
@@ -1040,7 +1080,7 @@ function shuffleArray(a) {
         }
         if (isBursting()) engine = burstEngine;
         else engine = chooseEngine(searchEngines.split(','));
-        debug('NextSearchScheduled on: ' + engine);
+        // debug('NextSearchScheduled on: ' + engine);
         tmn_errTimeout = window.setTimeout(rescheduleOnError, delay * 3);
         tmn_searchTimer = window.setTimeout(doSearch, delay);
     }
@@ -1366,7 +1406,7 @@ function shuffleArray(a) {
             // you can only loop in reverse
             while (i--) {
                 //cout('Start: Fetching RSS ');
-                // cout(feeds[i])
+                // debug(feeds[i])
                 doRssFetch(feeds[i]);
             }
 
