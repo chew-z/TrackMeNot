@@ -460,6 +460,7 @@ TRACKMENOT.TMNSearch = function() {
         // return Math.floor(Math.random() * (max + 1)) + min;
     }
 
+
     function randomElement(array) {
         // cout("Array length: " + array.length)
         var index = roll(0, array.length - 1);
@@ -469,7 +470,7 @@ TRACKMENOT.TMNSearch = function() {
 
 
 function box_muller() {
-// Standard Normal variate using Box-Muller transform.
+// Normal distribution using Box-Muller transform.
     var u = 1 - Math.random(); // Subtraction to flip [0, 1) to (0, 1].
     var v = 1 - Math.random();
     return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
@@ -569,8 +570,6 @@ function shuffle(array) {
     }
 
 
-
-
     function isBursting() {
         return burstEnabled && burstCount > 0;
     }
@@ -610,12 +609,14 @@ function shuffle(array) {
         saveOptions();
     }
 
+    // Heavily fe-factored and more ideas yet
+    // This if optimized for extracion from Google Search result pages
     function extractQueries(html) {
-        // This if optimized for extracion for Google Search result pages
         if (!html) {
             cout("NO HTML!");
             return;
         }
+        // My estimated distribution of querry length
         var distribution = [1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
         var possibleSearchResults = html.split("<span class=\"st\">")
         if (typeof TMNQueries.extracted == 'undefined') {
@@ -664,17 +665,20 @@ function shuffle(array) {
 
             addQuery(firstWords, TMNQueries.extracted);
         }
-        // Longest queries should be removed  with highier priority ?  TODO
+        //  Here ( why here ? ) we prune extracted queries
+        // keeping maximum of 200
         while (TMNQueries.extracted.length > 200) {
            // var rand = roll(0, TMNQueries.extracted.length - 1);
+          // TMNQueries.extracted.splice(rand, 1);
+
+           // Sort querrie by length and remove longest first (as they are most specific) TODO
             TMNQueries.extracted.sort(function(a, b){
                       // ASC  -> a.length - b.length DESC -> b.length - a.length
                       return b.length - a.length;
                     })
-            // TMNQueries.extracted.splice(rand, 1);
-            TMNQueries.extracted.splice(0, 1);
-            // And ocasionally nuke shortest words
-            if (roll(0,100) > 95) {
+            TMNQueries.extracted.splice(0, TMNQueries.extracted.length -200);
+            // And to keep a balance ocasionally nuke last [shortest] queries as well
+            if (roll(0, 100) > 95) {
                 TMNQueries.extracted.splice(150, 50);
             }
         }
@@ -729,6 +733,7 @@ function shuffle(array) {
 
 
     // returns # of keywords added
+    // TODO - this is really black box to me for now
     function filterKeyWords(rssTitles, feedUrl) {
         var addStr = ""; //tmp-debugging
         var forbiddenChar = new RegExp("[ \d{1,2}\.@#<>\"\\\/,;'Õ{}:?%|\^~`=]+", "g");
@@ -759,7 +764,8 @@ function shuffle(array) {
     }
 
 
-    // returns # of keywords added - No it doesn't
+    // returns # of keywords added - No it doesn't, it returns 1
+    // TODO - the result is far from adding RSS titles. Works though.
     function addRssTitles(xmlData, feedUrl) {
         //cout('addRssTitles: ');
         var rssTitles = "";
@@ -809,12 +815,12 @@ function shuffle(array) {
         req.send(null);
     }
 
-
+    // This had been refactored significantly  as it had bugs and poor logic
     function doRssFetch(feedUrl) {
         cout('doRSSFetch: ' + feedUrl);
         try {
             var req = new XMLHttpRequest();
-            req.open('GET', feedUrl, true); // false == not async
+            req.open('GET', feedUrl, true); // false == not async but this is depreciated
             req.onreadystatechange = function() {
                 if (req.readyState == 4 && req.status == 200 && req.responseXML != null) {
                     cout("doRSSFetch: Recieved feed from " + feedUrl);
@@ -848,7 +854,7 @@ function shuffle(array) {
             incQueries.push(chomp(incQuery));
     }
 
-
+    // Much shoter then original which had some weird logic here
     function getQuery() {
         var term = randomQuery();
         term = chomp(term);
@@ -898,8 +904,9 @@ function shuffle(array) {
         return logEntry;
     }
 
+   // TODO - not done here
+    // for now I have removed logic of incremental queries
     function doSearch() {
-        // removed logic of incremental queries
         // TODO - think of some randomization / mixing / 
         var newquery = getQuery();
         try {
@@ -908,7 +915,8 @@ function shuffle(array) {
             cerr("error in doSearch", e);
         }
     }
-
+   
+    // The else part of ending queries had been re-factored similiar to doRSSFetch
     function sendQuery(queryToSend) {
         tmn_scheduledSearch = false;
         cout("Engine: " + engine)
@@ -962,7 +970,7 @@ function shuffle(array) {
                             id: tmn_id++
                         };
                         log(logEntry);
-                        // Not possible to scratch Google Search results ?
+                        // scratch Google Search results  to seed new queries
                         extractQueries(req.responseText);
                     } else {
                         //cout(req.readyState + " " + req.status);
