@@ -482,12 +482,12 @@ TRACKMENOT.TMNSearch = function() {
 
 
     function shuffleArray(a) {
-  var currentIndex = a.length, tempValue, randomIndex;
+    var currentIndex = a.length, tempValue, randomIndex;
 
   // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
+    while (0 !== currentIndex) {
     // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
+        randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex -= 1;
     // And swap it with the current element.
     tempValue = a[currentIndex];
@@ -624,22 +624,11 @@ TRACKMENOT.TMNSearch = function() {
             cout('extractQueries: cleaned: ' + cleanSearchResult);
             addQuery(cleanSearchResult, TMNQueries.extracted);
         }
-        //  Here ( why here ? ) we prune extracted queries
+        //  Here we prune extracted queries
         // keeping maximum of 200
         while (TMNQueries.extracted.length > 200) {
            var rand = roll(0, TMNQueries.extracted.length - 1);
            TMNQueries.extracted.splice(rand, 1);
-        // This logic here isn't so relevant as we now keep extracted queries long and trim them later
-        // Sort querrie by length and remove longest first (as they are most specific) TODO
-        //   TMNQueries.extracted.sort(function(a, b){
-                      // ASC  -> a.length - b.length DESC -> b.length - a.length
-        //             return b.length - a.length;
-        //         })
-        //   TMNQueries.extracted.splice(0, TMNQueries.extracted.length -200);
-        // And to keep a balance ocasionally nuke last [shortest] queries as well
-        //    if (roll(0, 100) > 95) {
-        //        TMNQueries.extracted.splice(150, 50);
-        //    }
         }
         // debug(TMNQueries.extracted);
     }
@@ -827,15 +816,18 @@ TRACKMENOT.TMNSearch = function() {
     function getSubQuery(query) {
             // My fair guess estimated distribution of typical querry length
             var distribution = [1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
-            var randomLength = distribution[roll(0, 15)];
+            var randomLength = distribution[roll(0, distribution.length -1)];
             var queryWords = query.split(' ');
             var randomWords = queryWords;
             // randomly either get initial part of query or random words out of it
-            if (Math.random() < 0.7 ){
+            if (Math.random() < 0.3 ){
                 randomWords = queryWords.slice(0, randomLength).join(' ');
             }
             else  {
-                randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
+                randomWords = shuffleArray(queryWords); 
+                // shuffle but put uppercase first as they are more likely to be keywords
+                // this is silly idea - TODO
+                randomWords = randomWords.slice(0, randomLength).join(' ');
             }
             cout('getSubQuery: ' + randomWords);
             return randomWords
@@ -978,7 +970,7 @@ TRACKMENOT.TMNSearch = function() {
 
         } else {
             var queryUrl = queryToURL(url, queryToSend);
-            cout('url: ' + url);
+            // debug('url: ' + url);
             cout("The encoded URL is " + queryUrl);
             updateOnSend(queryToSend);
             currentTMNURL = queryUrl;
@@ -991,7 +983,7 @@ TRACKMENOT.TMNSearch = function() {
                         reschedule();
                         cout("sendQuery: Recieved search results from " + queryUrl);
                         // debug(req.responseXML);
-                        //cout(req.responseText);
+                        // debug(req.responseText);
                         var logEntry = {
                             type: 'query',
                             engine: engine,
@@ -1000,10 +992,10 @@ TRACKMENOT.TMNSearch = function() {
                             id: tmn_id++
                         };
                         log(logEntry);
-                        // scratch Google Search results  to seed new queries
+                        // scratch Google Search results to seed new queries
                         extractQueries(req.responseText);
                     } else {
-                        //cout(req.readyState + " " + req.status);
+                        // debug(req.readyState + " " + req.status);
                     }
                 }
                 req.send();
@@ -1117,8 +1109,6 @@ TRACKMENOT.TMNSearch = function() {
     }
 
 
-
-
     function getOptions() {
         var options = {};
         options.enabled = enabled;
@@ -1149,12 +1139,14 @@ TRACKMENOT.TMNSearch = function() {
         disableLogs = false;
     }
 
+
     function restoreOptions() {
         if (!localStorage["options_tmn"]) {
             initOptions();
             cout("Init: " + enabled)
             return;
         }
+
 
         try {
             var options = JSON.parse(localStorage["options_tmn"]);
@@ -1186,7 +1178,6 @@ TRACKMENOT.TMNSearch = function() {
     }
 
 
-
     function restartTMN() {
         createTab();
         enabled = true;
@@ -1205,6 +1196,7 @@ TRACKMENOT.TMNSearch = function() {
         if (useTab)
             deleteTab();
 
+
         chrome.browserAction.setBadgeBackgroundColor({
             'color': [255, 0, 0, 255]
         })
@@ -1218,6 +1210,7 @@ TRACKMENOT.TMNSearch = function() {
         window.clearTimeout(tmn_errTimeout);
     }
 
+
     function preserveTMNTab() {
         if (useTab && enabled) {
             tmn_tab = null;
@@ -1227,11 +1220,11 @@ TRACKMENOT.TMNSearch = function() {
         }
     }
 
+
     function formatNum(val) {
         if (val < 10) return '0' + val;
         return val
     }
-
 
 
     function log(entry) {
@@ -1255,6 +1248,7 @@ TRACKMENOT.TMNSearch = function() {
         });
     }
 
+
     function sendClickEvent() {
         if (prev_engine) {
             cout("About to click on " + prev_engine)
@@ -1263,6 +1257,7 @@ TRACKMENOT.TMNSearch = function() {
             });
         }
     }
+
 
     function handleRequest(request, sender, sendResponse) {
 
