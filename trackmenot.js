@@ -477,19 +477,19 @@ TRACKMENOT.TMNSearch = function() {
 
 
     // https://stackoverflow.com/questions/16110758
-    function beta() {
-       return sin(Math.random()*pi/2)^2; 
+   function beta() {
+        return Math.pow(Math.sin(Math.random() * Math.PI/2), 2)
     }
 
 
     function beta_left() {
-        var beta = beta();
-        return (beta < 0.5) ? 2*beta : 2*(1-beta);
+        var b = beta();
+        return (b < 0.5) ? 2*b : 2*(1-b);
     }
 
 
     function roll_beta_left(min, max) {
-        return Math.floor(beta_left() * (max - min + 1)) + min; 
+        return Math.floor(beta_left() * (max - min + 1)) + min;
     }
 
 
@@ -523,6 +523,7 @@ TRACKMENOT.TMNSearch = function() {
 
     // Extracts possible keywords from text
     // Uppercase followed by more Uppercase - most likely to be a keyword
+    // Saddly doesn't work for non-Latin languages - TODO?
     function getKeywords(query) {
         var queryWords = query.split(' ');
         var i = queryWords.length;
@@ -750,6 +751,7 @@ TRACKMENOT.TMNSearch = function() {
         return true;
     }
 
+    //TODO - this sad racist function removes all non-English words, emojis etc. NOT GOOD
     function addQuery(term, queryList) {
         var noniso = new RegExp("[^a-zA-Z0-9_.\ \\u00C0-\\u00FF+]+", "g");
 
@@ -885,40 +887,46 @@ TRACKMENOT.TMNSearch = function() {
         }
     }
 
-
+    // randomly with arbitrary weights - either get part of query, try extracting keywords or select random words
     function getSubQuery(query) {
-            // My fair guess estimated distribution of typical querry length
-            var distribution = [1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
+            // My fair guess - estimated distribution of typical querry length
+            var distribution = [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
             var randomLength = distribution[roll(0, distribution.length -1)];
             var queryWords = query.split(' ');
             var randomWords = queryWords;
             var keywords = getKeywords(query);
-            // randomly either get initial part of query, try keywords or random words out of it
-            if (Math.random() > 0.5 &&  keywords.length > 0 ){
+            // with arbitrary weights - another fair guess
+            if (Math.random() > 0.5 &&  keywords.length > 0 ){  // try extracting keywords
                 randomWords = randomElement(keywords);
-            } else if (Math.random() < 0.3 ) { 
+            } else if (Math.random() < 0.3 ) {                  //  select random words
+                // shuffle Words, get first few (this is random select), join into query term
                 randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
-            } else {
-                randomWords = queryWords.slice(0, randomLength).join(' ');
+            } else {                                            // get part of query
+                //  heavily favor starting at beggining of query
+                var randomStart = roll_beta_left(0, (queryWords.length - randomLength));
+                debug('randomStart: ' + randomStart + ' randomLength: ' + randomLength);
+                // get query sequence or randomLength (with distribution[] like above)
+                randomWords = queryWords.slice(randomStart, randomStart + randomLength).join(' ');
             }
             cout('getSubQuery: ' + randomWords);
             return randomWords
     }
 
 
-    // here query randomization happens - get random query type and select random query
+    // here query randomization happens - randomize query type and select random query
     // TODO - improve logic - already improved but ..
     function randomQuery() {
         var qtype = randomElement(typeoffeeds)  // This should be weighted or changed- now some queries dominate others - for examole too many zeitgeist type queries
         cout('randomQuery: query type: ' + qtype);
         var queries = [];
         var term = 'generic search term';
+         // TODO - at the moment zeitgeist is overweight and results are plain silly
         if (qtype == 'zeitgeist' ) {
             queries = TMNQueries[qtype];
             term = randomElement(queries); 
-            // generic zeitgeist queries make no sense as results are too broad and queries seem unnatural
-            // like facebook vs facebook Prince or youtube vs youtube Ed Sheeran
-            var queryset = TMNQueries['rss'];
+            // generic zeitgeist queries make little sense as results are too broad and queries seem unnatural
+            // like 'facebook' vs 'facebook Prince' or 'youtube' vs 'youtube Ed Sheeran'
+                       var queryset = TMNQueries['rss'];
             queries = randomElement(queryset).words
             termVariation = getSubQuery(randomElement(queries));
             term =  term + ' ' + termVariation;
@@ -939,7 +947,6 @@ TRACKMENOT.TMNSearch = function() {
                 term = getSubQuery(term);
             }
         }
-        // var term = chomp(randomElement(queries));  // This is not enough - simply choosing random query
         // debug('randomQuery: term: ' + term);
         if (!term || term.length < 1)
             throw new Error(" randomQuery: term='" + term);
@@ -952,9 +959,9 @@ TRACKMENOT.TMNSearch = function() {
     function getQuery() {
         var term = randomQuery();
         term = chomp(term);
+        term = term.replace(/^\s+/, ''); //remove the first space // if (term[0] == ' ') term = term.substr(1); 
         if (Math.random() < 0.8) term = term.toLowerCase(); 
-        if (term[0] == ' ') term = term.substr(1); //remove the first space ;
-        cout('getQuery: term: ' + term);
+                cout('getQuery: term: ' + term);
         return term;
     }
 
