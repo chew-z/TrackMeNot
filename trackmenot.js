@@ -78,7 +78,8 @@ TRACKMENOT.TMNSearch = function() {
         /jobs/i, /answers/i, /options/i, /customize/i, /settings/i,
         /Developers/, /cashback/, /Health/, /Products/, /QnABeta/,
         /<more>/, /Travel/, /Personals/, /Local/, /Trademarks/,
-        /cache/i, /similar/i, /login/i, /mail/i, /feed/i
+        /cache/i, /similar/i, /login/i, /mail/i, /feed/i, /followers/,
+        /likes/i, /following/
     )
 
     var testAd_google = function(anchorClass, anchorlink) {
@@ -278,7 +279,8 @@ TRACKMENOT.TMNSearch = function() {
 
     function runScript(tab) {
         worker_opt = tab.attach({
-            contentScriptFile: [data.url("jquery.js"), data.url("option-script.js")]
+            contentScriptFile: [data.url("jquery.js"), data.url("option-script.js"), data.url("xregexp-all.js")]
+            // contentScriptFile: [data.url("jquery.js"), data.url("option-script.js")]
         });
         sendOptionToTab();
         /*handleMessageFromOptionScript("TMNSaveOptions",saveOptionFromTab)
@@ -535,7 +537,7 @@ TRACKMENOT.TMNSearch = function() {
         rank.fill(0);
         while (i--) { // 1st loop - rank words begining with Uppercase +1
             var word = queryWords[i]
-            if ( word.length < 1 ) { // skip empty words - rank -1
+            if ( word.length < 1 ) {            // empty words - rank -1
                 rank[i] = -1;
                 continue;
             }
@@ -543,7 +545,7 @@ TRACKMENOT.TMNSearch = function() {
             var s = word.charAt(0);
             if  ( s === s.toUpperCase() && upper.test(s) ) { // rank +1
                 rank[i] = 1;
-            } else  if  ( digit.test(s) ) {         // digits rank -1
+            } else  if  ( digit.test(s) ) {     // digits rank -1
                 rank[i] = -1;
             }
         }
@@ -690,7 +692,7 @@ TRACKMENOT.TMNSearch = function() {
             cleanSearchResult = cleanSearchResult.replace(/&(.*?);/gm, '');
             // removes '-' and ',' '.'  '(' ')' '?'
             cleanSearchResult = cleanSearchResult.replace(/, |- |\. | \(|\) |\? /gm, ' ');
-            // remove glue
+            // remove English language glue
             cleanSearchResult = cleanSearchResult.replace(/ and | with | a | an | any | it | has /gm, ' ');
             //  finally replace multiple spaces with single space
             cleanSearchResult = cleanSearchResult.replace( /\s\s+/g, ' ' );
@@ -751,12 +753,18 @@ TRACKMENOT.TMNSearch = function() {
         return true;
     }
 
-    //TODO - this sad racist function removes all non-English words, emojis etc. NOT GOOD
+    //Now using XRegExp and allowing also other Unicode scripts not just ISO
+    // caled by extractQueries() & extractRssTitles()
     function addQuery(term, queryList) {
-        var noniso = new RegExp("[^a-zA-Z0-9_.\ \\u00C0-\\u00FF+]+", "g");
-
-        term = term.replace(noniso, '');
-        term = chomp(term);
+        /*  var noniso = new RegExp("[^a-zA-Z0-9_.\ \\u00C0-\\u00FF+]+", "g");
+            term = term.replace(noniso, '');
+            term = chomp(term); 
+        */
+        var notNLZ = new XRegExp('[^\\p{N}\\p{L}\\p{Z}]+', 'g'); // NLZ - number, letter, separator
+        // debug(term);
+        term = XRegExp.replace(term, notNLZ, '');
+        term = XRegExp.replace(term, /\s\s+/, ' ');
+        // debug(term);
 
         if (isBlackList(term))
             return false;
@@ -771,8 +779,10 @@ TRACKMENOT.TMNSearch = function() {
         if (term.indexOf("-") == 0 && term.indexOf(" ") < 0)
             return false;
 
-        if (!queryOk(term))
+        if (!queryOk(term)) {
+            debug('addQuery: !queryOK: ' + term);
             return false;
+        }
 
         queryList.push(term);
         //gtmn.cout("adding("+gtmn._queries.length+"): "+term);
@@ -896,7 +906,7 @@ TRACKMENOT.TMNSearch = function() {
             var randomWords = queryWords;
             var keywords = getKeywords(query);
             // with arbitrary weights - another fair guess
-            if (Math.random() > 0.5 &&  keywords.length > 0 ){  // try extracting keywords
+            if (Math.random() > 0.4 &&  keywords.length > 0 ){  // try extracting keywords
                 randomWords = randomElement(keywords);
             } else if (Math.random() < 0.3 ) {                  //  select random words
                 // shuffle Words, get first few (this is random select), join into query term
@@ -916,7 +926,7 @@ TRACKMENOT.TMNSearch = function() {
     // here query randomization happens - randomize query type and select random query
     // TODO - improve logic - already improved but ..
     function randomQuery() {
-        var qtype = randomElement(typeoffeeds)  // This should be weighted or changed- now some queries dominate others - for examole too many zeitgeist type queries
+        var qtype = randomElement(typeoffeeds)  // This should be weighted or changed - now some queries dominate others - too many zeitgeist type queries
         cout('randomQuery: query type: ' + qtype);
         var queries = [];
         var term = 'generic search term';
