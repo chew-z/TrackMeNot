@@ -33,7 +33,7 @@ TRACKMENOT.TMNSearch = function() {
     var engine = 'google';
     var TMNQueries = {};
     var branch = "extensions.trackmenot."
-    var feedList = "http://feeds.musicchartfeeds.com/itunes-pop-chart~http://www.todayonline.com/feed/singapore~http://www.straitstimes.com/news/singapore/rss.xml~http://stackoverflow.com/feeds/tag/android+or+html+or+javascript+or+python~https://news.ycombinator.com/rss~https://trends.google.com/trends/hottrends/atom/feed?pn=p5";
+    var feedList = "http://feeds.musicchartfeeds.com/itunes-pop-chart~http://www.todayonline.com/feed/singapore~http://www.straitstimes.com/news/singapore/rss.xml~http://stackoverflow.com/feeds/tag/android+or+html+or+javascript+or+python~https://news.ycombinator.com/rss~https://trends.google.com/trends/hottrends/atom/feed?pn=p5~https://trends.google.com/trends/hottrends/atom/feed?pn=p4";
     var tmnLogs = [];
     var disableLogs = false;
     var saveLogs = true;
@@ -78,8 +78,8 @@ TRACKMENOT.TMNSearch = function() {
         /jobs/i, /answers/i, /options/i, /customize/i, /settings/i,
         /Developers/, /cashback/, /Health/, /Products/, /QnABeta/,
         /<more>/, /Travel/, /TripAdvisor/, /Personals/, /Local/, /Trademarks/,
-        /cache/i, /similar/i, /login/i, /mail/i, /feed/i, /followers/,
-        /likes/, /following/
+        /cache/i, /similar/i, /login/i, /mail/i, /feed/i, /Followers/,
+        /likes/, /Following/
     )
 
     var testAd_google = function(anchorClass, anchorlink) {
@@ -694,15 +694,8 @@ TRACKMENOT.TMNSearch = function() {
             // cleans '-' and ',' '.'  '(' ')' '?'
             singleSearchResult = singleSearchResult.replace(/, |- |\. | \(|\) |\? /gm, ' ');
             // remove English language glue
-             var cleanSearchResult = singleSearchResult.replace(/ and | with | a | an | any | it | has /gm, ' ');
+            var cleanSearchResult = singleSearchResult.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
 
-            /* 
-            // clean to NLZ
-            var notNLZ = new XRegExp('[^\\p{N}\\p{L}\\p{Z}]+', 'g'); // NLZ - number, letter, separator
-            var cleanSearchResult = XRegExp.replace(singleSearchResult, notNLZ, '');
-            //  finally replace multiple spaces with single space
-            cleanSearchResult = cleanSearchResult.replace( /\s\s+/g, ' ' );
-            */
             // return results
             // cout('extractQueries: cleaned: ' + cleanSearchResult);
             addQuery(cleanSearchResult, TMNQueries.extracted);
@@ -735,6 +728,8 @@ TRACKMENOT.TMNSearch = function() {
                 rssTitles = feedTitles[i].firstChild.nodeValue;
             }
             rssTitles = rssTitles.replace(/\d{1,3}\.\s/g, ''); //Leading numbers in lists like iTunes Top 100
+            rssTitles = rssTitles.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
+
             addQuery(rssTitles, feedObject.words);
         }
         cout('addRSSTitles : ' + feedObject.name + " --- " + feedObject.words);
@@ -908,7 +903,7 @@ TRACKMENOT.TMNSearch = function() {
             var randomWords = queryWords;
             var keywords = getKeywords(query);
             // with arbitrary weights - another fair guess
-            if (Math.random() > 0.4 &&  keywords.length > 0 ){  // try extracting keywords
+            if (Math.random() > 0.3 &&  keywords.length > 0 ){  // try extracting keywords
                 randomWords = randomElement(keywords);
             } else if (Math.random() < 0.3 ) {                  //  select random words
                 // shuffle Words, get first few (this is random select), join into query term
@@ -928,7 +923,9 @@ TRACKMENOT.TMNSearch = function() {
     // here query randomization happens - randomize query type and select random query
     // TODO - improve logic - already improved but ..
     function randomQuery() {
-        var qtype = randomElement(typeoffeeds)  // This should be weighted or changed - now some queries dominate others - too many zeitgeist type queries
+        // var qtype = randomElement(typeoffeeds)  // This should be weighted or changed - now some queries dominate others - too many zeitgeist type queries
+        var distributionOfQueries = ["zeitgeist", "rss", "rss", "extracted", "extracted", "extracted"];
+        var qtype = randomElement(distributionOfQueries);
         cout('randomQuery: query type: ' + qtype);
         var queries = [];
         var term = 'generic search term';
