@@ -77,9 +77,9 @@ TRACKMENOT.TMNSearch = function() {
         /Webmasters/, /MapQuest/, /Movies/, /Music/, /Yellow Pages/,
         /jobs/i, /answers/i, /options/i, /customize/i, /settings/i,
         /Developers/, /cashback/, /Health/, /Products/, /QnABeta/,
-        /<more>/, /Travel/, /Personals/, /Local/, /Trademarks/,
+        /<more>/, /Travel/, /TripAdvisor/, /Personals/, /Local/, /Trademarks/,
         /cache/i, /similar/i, /login/i, /mail/i, /feed/i, /followers/,
-        /likes/i, /following/
+        /likes/, /following/
     )
 
     var testAd_google = function(anchorClass, anchorlink) {
@@ -682,22 +682,29 @@ TRACKMENOT.TMNSearch = function() {
         while (i--) {
             var singleSearchResult = possibleSearchResults[i].split('</span>')[0]
             // debug('extractQueries: ' + singleSearchResult);
-            if (singleSearchResult.length < 24 || singleSearchResult.length > 210) continue;
+            // Not too short, not too long
+            if (singleSearchResult.length < 16 || singleSearchResult.length > 256) continue;
+            // remove remaining HTML  tags
+            singleSearchResult = singleSearchResult.replace(/<(?:.|\n)*?>/gm, '');
+            // removes '&amp;', '&nbsp;' etc.
+            singleSearchResult = singleSearchResult.replace(/&(.*?);/gm, '');
             if (singleSearchResult.indexOf('days ago') != -1 || singleSearchResult.indexOf('1 day ago') != -1 || singleSearchResult.indexOf('hours ago') != -1 || singleSearchResult.indexOf('1 hour ago') != -1) continue;
             if (singleSearchResult.indexOf('mins ago') != -1 || singleSearchResult.indexOf(' 201') != -1 | singleSearchResult.indexOf(' 200') != -1) continue;
-            // remove remaining HTML  tags
-            var cleanSearchResult = singleSearchResult.replace(/<(?:.|\n)*?>/gm, '');
-            // debug('extractQueries: ' + cleanSearchResult);
-            // removes '&amp;', '&nbsp;' etc.
-            cleanSearchResult = cleanSearchResult.replace(/&(.*?);/gm, '');
-            // removes '-' and ',' '.'  '(' ')' '?'
-            cleanSearchResult = cleanSearchResult.replace(/, |- |\. | \(|\) |\? /gm, ' ');
+            // debug('extractQueries: ' + singleSearchResult);
+            // cleans '-' and ',' '.'  '(' ')' '?'
+            singleSearchResult = singleSearchResult.replace(/, |- |\. | \(|\) |\? /gm, ' ');
             // remove English language glue
-            cleanSearchResult = cleanSearchResult.replace(/ and | with | a | an | any | it | has /gm, ' ');
+             var cleanSearchResult = singleSearchResult.replace(/ and | with | a | an | any | it | has /gm, ' ');
+
+            /* 
+            // clean to NLZ
+            var notNLZ = new XRegExp('[^\\p{N}\\p{L}\\p{Z}]+', 'g'); // NLZ - number, letter, separator
+            var cleanSearchResult = XRegExp.replace(singleSearchResult, notNLZ, '');
             //  finally replace multiple spaces with single space
             cleanSearchResult = cleanSearchResult.replace( /\s\s+/g, ' ' );
+            */
             // return results
-            cout('extractQueries: cleaned: ' + cleanSearchResult);
+            // cout('extractQueries: cleaned: ' + cleanSearchResult);
             addQuery(cleanSearchResult, TMNQueries.extracted);
         }
         //  Here we prune extracted queries
@@ -744,7 +751,7 @@ TRACKMENOT.TMNSearch = function() {
         }
         return false;
     }
-
+    //TODO - not sure ?
     function queryOk(a) {
         for (i = 0; i < skipex.length; i++) {
             if (skipex[i].test(a))
@@ -756,15 +763,10 @@ TRACKMENOT.TMNSearch = function() {
     //Now using XRegExp and allowing also other Unicode scripts not just ISO
     // caled by extractQueries() & extractRssTitles()
     function addQuery(term, queryList) {
-        /*  var noniso = new RegExp("[^a-zA-Z0-9_.\ \\u00C0-\\u00FF+]+", "g");
-            term = term.replace(noniso, '');
-            term = chomp(term); 
-        */
+        // TODO - this is duplicating effort from extractQuerries() - reconsider
         var notNLZ = new XRegExp('[^\\p{N}\\p{L}\\p{Z}]+', 'g'); // NLZ - number, letter, separator
-        // debug(term);
         term = XRegExp.replace(term, notNLZ, '');
-        term = XRegExp.replace(term, /\s\s+/, ' ');
-        // debug(term);
+        term = term.replace(/\s\s+/g, ' ');
 
         if (isBlackList(term))
             return false;
@@ -780,10 +782,10 @@ TRACKMENOT.TMNSearch = function() {
             return false;
 
         if (!queryOk(term)) {
-            debug('addQuery: !queryOK: ' + term);
+            // debug('addQuery: !queryOK: ' + term);
             return false;
         }
-
+        debug('addQuery: added: ' + term);
         queryList.push(term);
         //gtmn.cout("adding("+gtmn._queries.length+"): "+term);
 
