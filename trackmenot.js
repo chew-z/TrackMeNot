@@ -476,9 +476,26 @@ TRACKMENOT.TMNSearch = function() {
 }
 
 
+    // https://stackoverflow.com/questions/16110758
+    function beta() {
+       return sin(Math.random()*pi/2)^2; 
+    }
+
+
+    function beta_left() {
+        var beta = beta();
+        return (beta < 0.5) ? 2*beta : 2*(1-beta);
+    }
+
+
+    function roll_beta_left(min, max) {
+        return Math.floor(beta_left() * (max - min + 1)) + min; 
+    }
+
+
     function roll_gauss(min, max) {
         return Math.floor(box_muller() * (max - min + 1)) + min;
-}
+    }
 
 
     function shuffleArray(a) {
@@ -497,14 +514,15 @@ TRACKMENOT.TMNSearch = function() {
 
   return a;
 }
-
+    /*
     String.prototype.charAtIsUpper = function (atpos){
       var chr = this.charAt(atpos);
       return /[A-Z]|[\u0080-\u024F]/.test(chr) && chr === chr.toUpperCase();
     };
+    */
 
-// sort array of words - puts Uppercase words first, digits last
-// Uppercase followed by Uppercase is strongest - most likely to be a keyword
+    // Extracts possible keywords from text
+    // Uppercase followed by more Uppercase - most likely to be a keyword
     function getKeywords(query) {
         var queryWords = query.split(' ');
         var i = queryWords.length;
@@ -514,42 +532,44 @@ TRACKMENOT.TMNSearch = function() {
 
         // debug('getKeywords: ' + query);
         rank.fill(0);
-        while (i--) {
+        while (i--) { // 1st loop - rank words begining with Uppercase +1
             var word = queryWords[i]
-            if ( word.length < 1 ) {
+            if ( word.length < 1 ) { // skip empty words - rank -1
                 rank[i] = -1;
                 continue;
             }
             // debug('getKeywords: ' + word);
             var s = word.charAt(0);
-            if  ( s === s.toUpperCase() && upper.test(s) ) {
+            if  ( s === s.toUpperCase() && upper.test(s) ) { // rank +1
                 rank[i] = 1;
-            } else  if  ( digit.test(s) ) {
+            } else  if  ( digit.test(s) ) {         // digits rank -1
                 rank[i] = -1;
             }
         }
         // debug('getKeywords: ' + rank);
         i = queryWords.length - 1; 
-        while (i--) {
-            if ( rank[i] < 1 ) continue;
+        while (i--) { // 2nd loop - rank sequence of Uppercase words
+            if ( rank[i] < 1 ) continue;  // skip empty and digits
             if ( rank[i+1] > 0 )
-                rank[i] += rank[i+1];
+                rank[i] += rank[i+1];     // rank = length of sequence
         }
         // debug('getKeywords: ' + rank);
         i =  0;
         var keyWords = [];
-        while (i < queryWords.length) {
+        while (i < queryWords.length) { // 3rd loop - select sequence of two or more
             if( rank[i] > 1 ) {
                 var keyword = queryWords.slice(i, i + rank[i]).join(' ');
                 // debug('getKeywords: ' + keyword);
                 keyWords.push(keyword);
-                i = i + rank[i];
-            } else { 
+                i = i + rank[i]; // and move iteration to the end of sequence
+            } else { // move to next
                 i = i + 1;
             }
         }
-        cout('getKeywords: keywords: ' + keyWords);
-        return keyWords;
+        if ( keyWords.length > 0 ) {
+            cout('getKeywords: keywords: ' + keyWords);
+        }
+        return keyWords; // it can return empty [] - so check results
     }
 
     function monitorBurst() {
@@ -758,8 +778,8 @@ TRACKMENOT.TMNSearch = function() {
         return true;
     }
 
-
-    // returns # of keywords added
+/*
+    // NOT USED - replaced by getKeywords() used later on not during extraction
     // TODO - this is really black box to me for now
     function filterKeyWords(rssTitles, feedUrl) {
         var addStr = ""; //tmp-debugging
@@ -790,8 +810,8 @@ TRACKMENOT.TMNSearch = function() {
         return addStr;
     }
 
-
-    // returns # of keywords added - No it doesn't, it returns 0 or 1
+    
+    // NOT USED - replaced by extractRSSTitles()
     // TODO - the result is far from adding RSS titles. Works though.
     function addRssTitles(xmlData, feedUrl) {
         //cout('addRssTitles: ');
@@ -819,7 +839,7 @@ TRACKMENOT.TMNSearch = function() {
 
         return 1;
     }
-
+*/
 
     function readDHSList() {
         TMNQueries.dhs = [];
