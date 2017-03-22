@@ -487,16 +487,12 @@ TRACKMENOT.TMNSearch = function() {
 
     function beta_left() {
         var b = beta();
-        var bl = (b < 0.5) ? 2*b : 2*(1-b);
-        debug('beta_left: ' + b + ' - ' + bl);
-        return bl;
+        return bl = (b < 0.5) ? 2*b : 2*(1-b);
     }
 
 
     function roll_beta_left(min, max) {
-        var r = Math.floor(beta_left() * (max - min + 1)) + min;
-        debug('roll_beta_left :' + min + ' : ' + max + ' : ' + r);
-        return r;
+        return r = Math.floor(beta_left() * (max - min + 1)) + min;
     }
 
 
@@ -521,12 +517,6 @@ TRACKMENOT.TMNSearch = function() {
 
   return a;
 }
-    /*
-    String.prototype.charAtIsUpper = function (atpos){
-      var chr = this.charAt(atpos);
-      return /[A-Z]|[\u0080-\u024F]/.test(chr) && chr === chr.toUpperCase();
-    };
-    */
 
     // Extracts possible keywords from text
     // Uppercase followed by more Uppercase - most likely to be a keyword
@@ -696,7 +686,7 @@ TRACKMENOT.TMNSearch = function() {
             // removes '&amp;', '&nbsp;' etc.
             singleSearchResult = singleSearchResult.replace(/&(.*?);/gm, '');
             if (querySkip(singleSearchResult) ) {
-                debug('addQuery: !querySkip: ' + querySkip(singleSearchResult ) + ' : ' + singleSearchResult );
+                // debug('extractQueries: querySkip: ' + querySkip(singleSearchResult ) + ' : ' + singleSearchResult );
                 continue;
             }
             // debug('extractQueries: ' + singleSearchResult);
@@ -825,17 +815,16 @@ TRACKMENOT.TMNSearch = function() {
             req.onreadystatechange = function() {
                 if (req.readyState == 4 && req.status == 200 && req.responseXML != null) {
                     cout("doRSSFetch: Recieved feed from " + feedUrl);
-                    // var adds = addRssTitles(req.responseXML, feedUrl);
                     var adds = extractRssTitles(req.responseXML, feedUrl);
                     // debug(req.responseXML);
-                    // cout(req.responseText);
+                    // debug(req.responseText);
                 }
             }
             req.send();
         } catch (ex) {
             cout("[WARN]  doRssFetch(" + feedUrl + ")\n" +
                 "  " + ex.message + " | Using defaults...");
-            return; // no adds here...             
+            return; 
         }
     }
 
