@@ -64,6 +64,7 @@ TRACKMENOT.TMNSearch = function() {
     //var search_script = [data.url("jquery.js"),data.url("tmn_search.js")];
 
     var skipex = new Array(
+        /days ago/i, /hours ago/i, /1 day ago/i, /1 hour ago/i, /200/i, /201/i,
         /calendar/i, /advanced/i, /click /i, /terms/i, /Groups/i,
         /Images/, /Maps/, /search/i, /cache/i, /similar/i, /&#169;/,
         /sign in/i, /help[^Ss]/i, /download/i, /print/i, /Books/i, /rss/i,
@@ -79,7 +80,7 @@ TRACKMENOT.TMNSearch = function() {
         /Developers/, /cashback/, /Health/, /Products/, /QnABeta/,
         /<more>/, /Travel/, /TripAdvisor/, /Personals/, /Local/, /Trademarks/,
         /cache/i, /similar/i, /login/i, /mail/i, /feed/i, /Followers/,
-        /likes/, /Following/
+        /likes/, /Following/, /http/i
     )
 
     var testAd_google = function(anchorClass, anchorlink) {
@@ -486,12 +487,16 @@ TRACKMENOT.TMNSearch = function() {
 
     function beta_left() {
         var b = beta();
-        return (b < 0.5) ? 2*b : 2*(1-b);
+        var bl = (b < 0.5) ? 2*b : 2*(1-b);
+        debug('beta_left: ' + b + ' - ' + bl);
+        return bl;
     }
 
 
     function roll_beta_left(min, max) {
-        return Math.floor(beta_left() * (max - min + 1)) + min;
+        var r = Math.floor(beta_left() * (max - min + 1)) + min;
+        debug('roll_beta_left :' + min + ' : ' + max + ' : ' + r);
+        return r;
     }
 
 
@@ -590,6 +595,8 @@ TRACKMENOT.TMNSearch = function() {
 
             //
             // -- EXTRACT DATA FROM THE URL
+            // TODO - wrong results - doubling query terms 
+            //  https://encrypted.google.com/search?hl=en&q=|&q=xregexexp+url&*
             var pre = result[1];
             var query = result[2];
             var post = result[3];
@@ -618,7 +625,7 @@ TRACKMENOT.TMNSearch = function() {
         for (var i = 0; i < engines.length; i++) {
             var eng = engines[i]
             var regex = eng.regexmap;
-            // debug("  regex: " + regex + "  ->\n                   " + url);
+            debug("  regex: " + regex + "  ->\n                   " + url);
             result = url.match(regex);
 
             if (result) {
@@ -635,8 +642,8 @@ TRACKMENOT.TMNSearch = function() {
                 return result;
             }
             cout("REGEX_ERROR: " + url);
-            /* for (var i in result)
-                cout(" **** "+i+")"+result[i])*/
+            for (var i in result)
+                cout(" **** " + i + ")" + result[i])
         }
         result.push(eng.id);
         return result;
@@ -688,8 +695,10 @@ TRACKMENOT.TMNSearch = function() {
             singleSearchResult = singleSearchResult.replace(/<(?:.|\n)*?>/gm, '');
             // removes '&amp;', '&nbsp;' etc.
             singleSearchResult = singleSearchResult.replace(/&(.*?);/gm, '');
-            if (singleSearchResult.indexOf('days ago') != -1 || singleSearchResult.indexOf('1 day ago') != -1 || singleSearchResult.indexOf('hours ago') != -1 || singleSearchResult.indexOf('1 hour ago') != -1) continue;
-            if (singleSearchResult.indexOf('mins ago') != -1 || singleSearchResult.indexOf(' 201') != -1 | singleSearchResult.indexOf(' 200') != -1) continue;
+            if (querySkip(singleSearchResult) ) {
+                debug('addQuery: !querySkip: ' + querySkip(singleSearchResult ) + ' : ' + singleSearchResult );
+                continue;
+            }
             // debug('extractQueries: ' + singleSearchResult);
             // cleans '-' and ',' '.'  '(' ')' '?'
             singleSearchResult = singleSearchResult.replace(/, |- |\. | \(|\) |\? /gm, ' ');
@@ -747,18 +756,20 @@ TRACKMENOT.TMNSearch = function() {
         return false;
     }
     //TODO - not sure ?
-    function queryOk(a) {
+    function querySkip(a) {
         for (i = 0; i < skipex.length; i++) {
             if (skipex[i].test(a))
-                return false
+                return skipex[i];
         }
-        return true;
+        return false;
     }
 
     //Now using XRegExp and allowing also other Unicode scripts not just ISO
     // caled by extractQueries() & extractRssTitles()
     function addQuery(term, queryList) {
-        // TODO - this is duplicating effort from extractQuerries() - reconsider
+        // TODO - this is duplicating some effort from extractQuerries() 
+        // debug('addQuery: received: ' + term);
+
         var notNLZ = new XRegExp('[^\\p{N}\\p{L}\\p{Z}]+', 'g'); // NLZ - number, letter, separator
         term = XRegExp.replace(term, notNLZ, '');
         term = term.replace(/\s\s+/g, ' ');
@@ -776,10 +787,6 @@ TRACKMENOT.TMNSearch = function() {
         if (term.indexOf("-") == 0 && term.indexOf(" ") < 0)
             return false;
 
-        if (!queryOk(term)) {
-            // debug('addQuery: !queryOK: ' + term);
-            return false;
-        }
         debug('addQuery: added: ' + term);
         queryList.push(term);
         //gtmn.cout("adding("+gtmn._queries.length+"): "+term);
@@ -787,68 +794,6 @@ TRACKMENOT.TMNSearch = function() {
         return true;
     }
 
-/*
-    // NOT USED - replaced by getKeywords() used later on not during extraction
-    // TODO - this is really black box to me for now
-    function filterKeyWords(rssTitles, feedUrl) {
-        var addStr = ""; //tmp-debugging
-        var forbiddenChar = new RegExp("[ \d{1,2}\.@#<>\"\\\/,;'Õ{}:?%|\^~`=]+", "g");
-        var splitRegExp = new RegExp('[\\[\\]\\(\\)\\"\']+', "g");
-        var wordArray = rssTitles.split(forbiddenChar);
-
-        for (var i = 0; i < wordArray.length; i++) {
-            if (!wordArray[i].match('-----')) {
-                var word = wordArray[i].split(splitRegExp)[0];
-                if (word && word.length > 2) {
-                    W: while (i < (wordArray.length) && wordArray[i + 1] && !(wordArray[i + 1].match('-----') ||
-                            wordArray[i + 1].match(splitRegExp))) {
-                        var nextWord = wordArray[i + 1]; // added new check here -dch
-                        if (nextWord != nextWord.toLowerCase()) {
-                            nextWord = chomp(nextWord.toLowerCase().replace(/\s/g, '').replace(/[(<>"'Õ&]/g, ''));
-                            if (nextWord.length > 1) {
-                                word += ' ' + nextWord;
-                            }
-                        }
-                        i++;
-                    }
-                    word = word.replace(/-----/g, '')
-                    addStr += word + ", "; //tmp
-                }
-            }
-        }
-        return addStr;
-    }
-
-    
-    // NOT USED - replaced by extractRSSTitles()
-    // TODO - the result is far from adding RSS titles. Works though.
-    function addRssTitles(xmlData, feedUrl) {
-        //cout('addRssTitles: ');
-        var rssTitles = "";
-        var feedTitles = xmlData.getElementsByTagName("title");
-        // debug(feedTitles);
-        if (!feedTitles || feedTitles.length < 2) {
-            cerr("no items(" + feedTitles + ") for rss-feed: " + feedUrl);
-            return 0;
-        }
-        var feedObject = {};
-        feedObject.name = feedTitles[0].firstChild.nodeValue;
-        feedObject.words = [];
-        cout('addRSSTitles : ' + feedTitles[0].firstChild.nodeValue);
-        for (var i = 1; i < feedTitles.length; i++) {
-            if (feedTitles[i].firstChild) {
-                rssTitles = feedTitles[i].firstChild.nodeValue;
-                rssTitles += " ----- ";
-            }
-            var queryToAdd = filterKeyWords(rssTitles, feedUrl);
-            addQuery(queryToAdd, feedObject.words);
-        }
-        cout(feedObject.name + " : " + feedObject.words)
-        TMNQueries.rss.push(feedObject);
-
-        return 1;
-    }
-*/
 
     function readDHSList() {
         TMNQueries.dhs = [];
@@ -883,7 +828,7 @@ TRACKMENOT.TMNSearch = function() {
                     // var adds = addRssTitles(req.responseXML, feedUrl);
                     var adds = extractRssTitles(req.responseXML, feedUrl);
                     // debug(req.responseXML);
-                    //cout(req.responseText);
+                    // cout(req.responseText);
                 }
             }
             req.send();
@@ -900,6 +845,7 @@ TRACKMENOT.TMNSearch = function() {
             var distribution = [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
             var randomLength = distribution[roll(0, distribution.length -1)];
             var queryWords = query.split(' ');
+            var queryLength = queryWords.length;
             var randomWords = queryWords;
             var keywords = getKeywords(query);
             // with arbitrary weights - another fair guess
@@ -910,10 +856,11 @@ TRACKMENOT.TMNSearch = function() {
                 randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
             } else {                                            // get part of query
                 //  heavily favor starting at beggining of query
-                var randomStart = roll_beta_left(0, (queryWords.length - randomLength));
+                var randomLength = Math.min(randomLength, queryLength);
+                var randomStart = roll_beta_left(0, queryLength);
                 debug('randomStart: ' + randomStart + ' randomLength: ' + randomLength);
                 // get query sequence or randomLength (with distribution[] like above)
-                randomWords = queryWords.slice(randomStart, randomStart + randomLength).join(' ');
+                randomWords = queryWords.slice(randomStart, Math.min(randomStart + randomLength, queryLength)).join(' ');
             }
             cout('getSubQuery: ' + randomWords);
             return randomWords
@@ -1486,9 +1433,9 @@ TRACKMENOT.TMNSearch = function() {
             TMNQueries.rss = [];
             var feeds = feedList.split(/~/);
             var i = feeds.length;
-            // you can only loop in reverse
+
             while (i--) {
-                //cout('Start: Fetching RSS ');
+                // cout('Start: Fetching RSS ');
                 // debug(feeds[i])
                 doRssFetch(feeds[i]);
             }
