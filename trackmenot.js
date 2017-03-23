@@ -23,7 +23,7 @@ TRACKMENOT.TMNSearch = function() {
     var tmn_tab = null;
     var useTab = false;
     var enabled = true;
-    var debug_ = true;
+    var debug_ = false;
     var load_full_pages = false;
     var last_url = "";
     var stop_when = "start"
@@ -64,7 +64,8 @@ TRACKMENOT.TMNSearch = function() {
     //var search_script = [data.url("jquery.js"),data.url("tmn_search.js")];
 
     var skipex = new Array(
-        /days ago/i, /hours ago/i, /1 day ago/i, /1 hour ago/i, /200/i, /201/i,
+        /mins ago/, /days ago/, /hours ago/, /1 day ago/, /1 hour ago/, /200/i, /201/i,
+        /Thesaurus/i,
         /calendar/i, /advanced/i, /click /i, /terms/i, /Groups/i,
         /Images/, /Maps/, /search/i, /cache/i, /similar/i, /&#169;/,
         /sign in/i, /help[^Ss]/i, /download/i, /print/i, /Books/i, /rss/i,
@@ -565,7 +566,7 @@ TRACKMENOT.TMNSearch = function() {
             }
         }
         if ( keyWords.length > 0 ) {
-            cout('getKeywords: keywords: ' + keyWords);
+            debug('getKeywords: keywords: ' + keyWords);
         }
         return keyWords; // it can return empty [] - so check results
     }
@@ -619,7 +620,7 @@ TRACKMENOT.TMNSearch = function() {
             result = url.match(regex);
 
             if (result) {
-                cout(regex + " MATCHED! on " + eng.id);
+                debug(regex + " MATCHED! on " + eng.id);
                 break;
             }
         }
@@ -631,9 +632,9 @@ TRACKMENOT.TMNSearch = function() {
                 result.push(eng.id);
                 return result;
             }
-            cout("REGEX_ERROR: " + url);
+            debug("REGEX_ERROR: " + url);
             for (var i in result)
-                cout(" **** " + i + ")" + result[i])
+                debug(" **** " + i + ")" + result[i])
         }
         result.push(eng.id);
         return result;
@@ -653,11 +654,10 @@ TRACKMENOT.TMNSearch = function() {
     function validateFeeds(param) {
         TMNQueries.rss = [];
         feedList = param.feeds;
-        cout("Validating the feeds: " + feedList)
+        debug("Validating the feeds: " + feedList)
         var feeds = feedList.split(/~/);
         for (var i = 0; i < feeds.length; i++) {
-            cout("validateFeeds  ");
-            cout(feeds[i]);
+            debug("validateFeeds:  " + feeds[i]);
             doRssFetch(feeds[i]);
         }
         saveOptions();
@@ -668,7 +668,7 @@ TRACKMENOT.TMNSearch = function() {
     // This if optimized for extracion from Google Search result pages
     function extractQueries(html) {
         if (!html) {
-            cout("NO HTML!");
+            debug("extractQueries: No HTML!");
             return;
         }
         var possibleSearchResults = html.split("<span class=\"st\">")
@@ -686,7 +686,7 @@ TRACKMENOT.TMNSearch = function() {
             // removes '&amp;', '&nbsp;' etc.
             singleSearchResult = singleSearchResult.replace(/&(.*?);/gm, '');
             if (querySkip(singleSearchResult) ) {
-                // debug('extractQueries: querySkip: ' + querySkip(singleSearchResult ) + ' : ' + singleSearchResult );
+                debug('extractQueries: querySkip: ' + querySkip(singleSearchResult ) + ' : ' + singleSearchResult );
                 continue;
             }
             // debug('extractQueries: ' + singleSearchResult);
@@ -696,7 +696,7 @@ TRACKMENOT.TMNSearch = function() {
             var cleanSearchResult = singleSearchResult.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
 
             // return results
-            // cout('extractQueries: cleaned: ' + cleanSearchResult);
+            debug('extractQueries: cleaned: ' + cleanSearchResult);
             addQuery(cleanSearchResult, TMNQueries.extracted);
         }
         //  Here we prune extracted queries
@@ -758,7 +758,7 @@ TRACKMENOT.TMNSearch = function() {
     // caled by extractQueries() & extractRssTitles()
     function addQuery(term, queryList) {
         // TODO - this is duplicating some effort from extractQuerries() 
-        // debug('addQuery: received: ' + term);
+        debug('addQuery: received: ' + term);
 
         var notNLZ = new XRegExp('[^\\p{N}\\p{L}\\p{Z}]+', 'g'); // NLZ - number, letter, separator
         term = XRegExp.replace(term, notNLZ, '');
@@ -777,7 +777,7 @@ TRACKMENOT.TMNSearch = function() {
         if (term.indexOf("-") == 0 && term.indexOf(" ") < 0)
             return false;
 
-        debug('addQuery: added: ' + term);
+        cout('addQuery: added: ' + term);
         queryList.push(term);
         //gtmn.cout("adding("+gtmn._queries.length+"): "+term);
 
@@ -808,13 +808,13 @@ TRACKMENOT.TMNSearch = function() {
 
     // This had been refactored significantly as it had bugs and poor logic
     function doRssFetch(feedUrl) {
-        cout('doRSSFetch: ' + feedUrl);
+        debug('doRSSFetch: ' + feedUrl);
         try {
             var req = new XMLHttpRequest();
             req.open('GET', feedUrl, true); // false == not async but this is depreciated
             req.onreadystatechange = function() {
                 if (req.readyState == 4 && req.status == 200 && req.responseXML != null) {
-                    cout("doRSSFetch: Recieved feed from " + feedUrl);
+                    debug("doRSSFetch: Recieved feed from " + feedUrl);
                     var adds = extractRssTitles(req.responseXML, feedUrl);
                     // debug(req.responseXML);
                     // debug(req.responseText);
@@ -851,7 +851,7 @@ TRACKMENOT.TMNSearch = function() {
                 // get query sequence or randomLength (with distribution[] like above)
                 randomWords = queryWords.slice(randomStart, Math.min(randomStart + randomLength, queryLength)).join(' ');
             }
-            cout('getSubQuery: ' + randomWords);
+            debug('getSubQuery: ' + randomWords);
             return randomWords
     }
 
@@ -862,7 +862,7 @@ TRACKMENOT.TMNSearch = function() {
         // var qtype = randomElement(typeoffeeds)  // This should be weighted or changed - now some queries dominate others - too many zeitgeist type queries
         var distributionOfQueries = ["zeitgeist", "rss", "rss", "extracted", "extracted", "extracted"];
         var qtype = randomElement(distributionOfQueries);
-        cout('randomQuery: query type: ' + qtype);
+        debug('randomQuery: query type: ' + qtype);
         var queries = [];
         var term = 'generic search term';
          // TODO - at the moment zeitgeist is overweight and results are plain silly
@@ -1327,7 +1327,7 @@ TRACKMENOT.TMNSearch = function() {
             sendResponse({});
             return;
         }
-        cout("Background page received message: " + request.tmn);
+        debug("Background page received message: " + request.tmn);
         switch (request.tmn) {
             case "currentURL":
                 sendResponse({
@@ -1424,8 +1424,7 @@ TRACKMENOT.TMNSearch = function() {
             var i = feeds.length;
 
             while (i--) {
-                // cout('Start: Fetching RSS ');
-                // debug(feeds[i])
+                debug ('Start: Fetching RSS ' + feeds[i]);
                 doRssFetch(feeds[i]);
             }
 
