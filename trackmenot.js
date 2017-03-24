@@ -23,7 +23,7 @@ TRACKMENOT.TMNSearch = function() {
     var tmn_tab = null;
     var useTab = false;
     var enabled = true;
-    var debug_ = true;
+    var debug_ = false;
     var load_full_pages = false;
     var last_url = "";
     var stop_when = "start"
@@ -33,7 +33,7 @@ TRACKMENOT.TMNSearch = function() {
     var engine = 'google';
     var TMNQueries = {};
     var branch = "extensions.trackmenot."
-    var feedList = "http://feeds.musicchartfeeds.com/itunes-pop-chart~http://www.todayonline.com/feed/singapore~http://www.straitstimes.com/news/singapore/rss.xml~http://stackoverflow.com/feeds/tag/android+or+html+or+javascript+or+python~https://news.ycombinator.com/rss~https://trends.google.com/trends/hottrends/atom/feed?pn=p5~https://trends.google.com/trends/hottrends/atom/feed?pn=p4";
+    var feedList = "http://feeds.musicchartfeeds.com/itunes-pop-chart~http://www.todayonline.com/feed/singapore~http://www.straitstimes.com/news/singapore/rss.xml~http://stackoverflow.com/feeds/tag/android+or+html+or+javascript+or+python~https://news.ycombinator.com/rss~https://trends.google.com/trends/hottrends/atom/feed?pn=p5";
     var tmnLogs = [];
     var disableLogs = false;
     var saveLogs = true;
@@ -692,7 +692,15 @@ TRACKMENOT.TMNSearch = function() {
             }
             // debug('extractQueries: ' + singleSearchResult);
             // cleans '-' and ',' '.'  '(' ')' '?'
-            singleSearchResult = singleSearchResult.replace(/, |- |\. | \(|\) |\? /gm, ' ');
+            // singleSearchResult = singleSearchResult.replace(/, |- |\. | \(|\) |\? /gm, ' ');
+            //
+            // TODO - works but this is a wrong place for NLP
+            // var n = nlp_compromise.text(singleSearchResult).root();
+            // cout ('extractQueries: nlp: ' + n); 
+            // var normalizedSearchResult = n;
+            // cout ('extractQueries: ' + normalizedSearchResult + ' --- ' + singleSearchResult);
+            // var cleanSearchResult = normalizedSearchResult;
+
             // remove English language glue
             var cleanSearchResult = singleSearchResult.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
 
@@ -712,7 +720,7 @@ TRACKMENOT.TMNSearch = function() {
 
     // Extract titles from RSS feed - used as alternative to addRssTitles()
     function extractRssTitles(xmlData, feedUrl) {
-        var rssTitles = "";
+        var rssTitle = "";
         var feedTitles = xmlData.getElementsByTagName("title");
         // debug(feedTitles);
         if (!feedTitles || feedTitles.length < 2) {
@@ -725,12 +733,13 @@ TRACKMENOT.TMNSearch = function() {
         // debug('addRSSTitles : ' + feedTitles[0].firstChild.nodeValue);
         for (var i = 1; i < feedTitles.length; i++) {
             if (feedTitles[i].firstChild) {
-                rssTitles = feedTitles[i].firstChild.nodeValue;
+                rssTitle = feedTitles[i].firstChild.nodeValue;
             }
-            rssTitles = rssTitles.replace(/\d{1,3}\.\s/g, ''); //Leading numbers in lists like iTunes Top 100
-            rssTitles = rssTitles.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
+            rssTitle = rssTitle.replace(/\d{1,3}\.\s/g, ''); //Leading numbers in lists like iTunes Top 100
+            rssTitle = nlp_compromise.text(rssTitle).text();
+            // rssTitles = rssTitle.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
 
-            addQuery(rssTitles, feedObject.words);
+            addQuery(rssTitle, feedObject.words);
         }
         cout('addRSSTitles : ' + feedObject.name + " --- " + feedObject.words);
         TMNQueries.rss.push(feedObject);
@@ -863,7 +872,7 @@ TRACKMENOT.TMNSearch = function() {
         // var qtype = randomElement(typeoffeeds)  // This should be weighted or changed - now some queries dominate others - too many zeitgeist type queries
         var distributionOfQueries = ["zeitgeist", "rss", "rss", "extracted", "extracted", "extracted"];
         var qtype = randomElement(distributionOfQueries);
-        debug('randomQuery: query type: ' + qtype);
+        cout('randomQuery: query type: ' + qtype);
         var queries = [];
         var term = 'generic search term';
          // TODO - at the moment zeitgeist is overweight and results are plain silly
@@ -879,9 +888,14 @@ TRACKMENOT.TMNSearch = function() {
         }
         if (qtype == 'extracted') {
             queries = TMNQueries[qtype];
-            term = randomElement(queries); 
-            if (term.split(' ').length > 4 ) {
-                term = getSubQuery(term);
+            // Starting in clean state 'extracted' queries are empty. Use 'rss' instead.
+            if (queries === undefined || queries === null) {
+                qtype = 'rss';
+            } else {
+                term = randomElement(queries);
+                if (term.split(' ').length > 4 ) {
+                    term = getSubQuery(term);
+                }
             }
         }
         // rss queries

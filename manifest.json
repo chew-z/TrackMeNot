@@ -10,7 +10,7 @@
     "default_popup": "tmn_menu.html"
   },
   "background": {
-    "scripts": ["xregexp-all.js", "trackmenot.js"]
+    "scripts": ["xregexp-all.js", "nlp_compromise.min.js", "trackmenot.js"]
   },
   "options_page": "options.html",
   "content_scripts": [
