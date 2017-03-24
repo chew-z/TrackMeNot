@@ -23,7 +23,7 @@ TRACKMENOT.TMNSearch = function() {
     var tmn_tab = null;
     var useTab = false;
     var enabled = true;
-    var debug_ = false;
+    var debug_ = true;
     var load_full_pages = false;
     var last_url = "";
     var stop_when = "start"
@@ -41,11 +41,10 @@ TRACKMENOT.TMNSearch = function() {
     var useBlackList = true;
     var useDHSList = false;
     var typeoffeeds = [];
-    // var zeitgeist = ["facebook", "youtube", "netflix", "amazon", "grab", "Donald Trump", "7-Eleven", "Lee Chong Wei", "Nintendo Switch", "Google Pixel", "Emily Blunt", "JJ Lin", "Beauty and the Beast", "weather Bali", "hotels Thailand", "Bali flights", "Bangkok", "Denpasar", "Jakarta", "Lombok", "uber Kuta", "Air Asia", "Traveloka promo", "Tiger", "Chiangi", "Phuket", "Ko Samui", "hotel deals"]
-    var zeitgeist = ["facebook","twitter","snap","instagram","youtube","netflix","amazon","spotify","google","grab","uber","iphone","macbook","laptop","games","weather","hotels","hotel","flights","deals","cheap","Bali","Thailand","Mexico","Dominicana","Bangkok","Denpasar","Lombok","Chiangi","JFK","Los Angeles","Phuket","Ko Samui","JJ Lin","Beauty and the Beast","UEFA","Air Asia","Traveloka","Tiger","Donald Trump","7-Eleven","Lee Chong Wei","Nintendo Switch","Google Pixel","Emily Blunt"]
+    var zeitgeist = ["facebook","twitter","snap","instagram","youtube","netflix","amazon","spotify","uber","iphone 7","laptop","games","weather","hotels","guesthouse","flights","deals","cheap","Bali","Thailand","Dominicana","Bangkok","Denpasar","Chiangi","JFK","Heathrow","Los Angeles","Phuket","Pataya","JJ Lin","UEFA","Air Asia","Traveloka","Tiger","Donald Trump","7-Eleven","Lee Chong Wei","Nintendo Switch","Google Pixel","Emily Blunt","Elizabeth Debicki","Tom Hiddleston"]
     var tmn_timeout = 60000;
     var prev_engine = "None"
-    var burstEngine = '';
+    var burstEngine = "google";
     var burstTimeout = 6000;
     var burstEnabled = true;
     var tmn_searchTimer = null;
@@ -281,8 +280,7 @@ TRACKMENOT.TMNSearch = function() {
 
     function runScript(tab) {
         worker_opt = tab.attach({
-            contentScriptFile: [data.url("jquery.js"), data.url("option-script.js"), data.url("xregexp-all.js")]
-            // contentScriptFile: [data.url("jquery.js"), data.url("option-script.js")]
+            contentScriptFile: [data.url("jquery.js"), data.url("option-script.js")]
         });
         sendOptionToTab();
         /*handleMessageFromOptionScript("TMNSaveOptions",saveOptionFromTab)
@@ -383,6 +381,9 @@ TRACKMENOT.TMNSearch = function() {
             return null;
         }
     }
+
+
+
 
 
     function addEngine(param) {
@@ -964,7 +965,7 @@ TRACKMENOT.TMNSearch = function() {
         }
     }
    
-    // The else part of ending queries had been re-factored similiar to doRSSFetch
+    // The else part of sending queries had been re-factored similiar to doRSSFetch
     function sendQuery(queryToSend) {
         tmn_scheduledSearch = false;
         cout("Engine: " + engine)
@@ -1102,6 +1103,7 @@ TRACKMENOT.TMNSearch = function() {
     }
 
     function enterBurst(burst_engine) {
+        // TODO - 
         if (!burstEnabled) return;
         cout("Entering burst mode for engine: " + burst_engine)
         var logMessage = {
@@ -1297,12 +1299,12 @@ TRACKMENOT.TMNSearch = function() {
             sendResponse({});
             return;
         }
-        /*if (request.userSearch) {
+        /* if (request.userSearch) {
                 cout("Detected User search")
                 enterBurst(request.userSearch); 
                 sendResponse({});
                 return;
-            }*/
+        } */
         if (request.getURLMap) {
             var tmp_engine = request.getURLMap;
             var urlMap = currentUrlMap[tmp_engine];
