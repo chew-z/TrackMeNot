@@ -888,10 +888,13 @@ TRACKMENOT.TMNSearch = function() {
     function nlpQuery(query) {
             var interesting = [];
             var interestingPartOfSpeech = ['Acronym', 'Person', 'City', 'Place', 'Organization'];
+            var nouns = []
 
             text = nlp(query);
             var terms = text.terms().data();
+            var topics = text.topics().data();
             cout(terms);
+            cout(topics);
 
             for(var j=0; j < terms.length; j++) {
                 cout('NLP: ' + terms[j].text + " -> " + terms[j].bestTag);
@@ -899,13 +902,26 @@ TRACKMENOT.TMNSearch = function() {
                 if ( listInArray( interestingPartOfSpeech, terms[j].tags ) ) {
                     interesting.push( terms[j].text );
                 }
+                if ( terms[j].tags.indexOf( 'Noun' ) > -1 ) {
+                    nouns.push( terms[j].text );
+                }
             }
 
-            debug('nlpQuery: ' + interesting.join(' ') + ' <-- ' + query );
+            var uniqueInteresting = interesting.filter(function(elem, index, self) {
+                return index == self.indexOf(elem);
+            })
+            var uniqueNouns = nouns.filter(function(elem, index, self) {
+                return index == self.indexOf(elem);
+            })
 
-            if (interesting.length > 0) {
-                return interesting.join(' ');
+            if ( topics.length > 0) { 
+                debug('nlpQuery: ' + topics.join(' ') + ' <-- ' + query );
+                return topics.join(' ');
+            } else if ( uniqueInteresting.length > 0 ) {
+                debug('nlpQuery: ' + uniqueInteresting.join(' ') + ' <-- ' + query );
+                return uniqueInteresting.join(' ');
             } else {
+                debug('nlpQuery: ' + uniqueNouns.join(' ') + ' <-- ' + query );
                 return query;
             }
     }
