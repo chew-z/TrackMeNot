@@ -882,7 +882,7 @@ TRACKMENOT.TMNSearch = function() {
             for(var i = 0; i < sentences.length; i++) {
                 var terms = sentences[i].terms;
                 for(var j=0; j < terms.length; j++) {
-                    cout(terms[j].text + " -> " + terms[j].tag);
+                    cout('NLP: ' + terms[j].text + " -> " + terms[j].tag);
                     if ( interestingPartOfSpeech.indexOf( terms[j].tag ) > -1 ) {
                         interesting.push( terms[j].text );
                     }
