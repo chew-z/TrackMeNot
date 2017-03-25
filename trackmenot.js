@@ -64,6 +64,7 @@ TRACKMENOT.TMNSearch = function() {
     var skipex = new Array(
         /mins ago/, /days ago/, /hours ago/, /1 day ago/, /1 hour ago/, /200/i, /201/i,
         /Thesaurus/i, /Breaking news/, /Latest news/, /Top stories/, /headlines/,
+        /Enjoy/, /Exclusive/, 
         /calendar/i, /advanced/i, /click /i, /terms/i, /Groups/i,
         /Images/, /Maps/, /search/i, /cache/i, /similar/i, /&#169;/,
         /sign in/i, /help[^Ss]/i, /download/i, /print/i, /Books/i, /rss/i,
@@ -704,7 +705,7 @@ TRACKMENOT.TMNSearch = function() {
             var cleanSearchResult = singleSearchResult.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
 
             // return results
-            debug('extractQueries: cleaned: ' + cleanSearchResult);
+            cout('extractQueries: cleaned and added: ' + cleanSearchResult);
             addQuery(cleanSearchResult, TMNQueries.extracted);
         }
         //  Here we prune extracted queries
@@ -754,7 +755,7 @@ TRACKMENOT.TMNSearch = function() {
         }
         return false;
     }
-    //TODO - not sure ?
+    //TODO - improve skipex - only crap sentences ? 
     function querySkip(a) {
         for (i = 0; i < skipex.length; i++) {
             if (skipex[i].test(a))
@@ -786,7 +787,7 @@ TRACKMENOT.TMNSearch = function() {
         if (term.indexOf("-") == 0 && term.indexOf(" ") < 0)
             return false;
 
-        cout('addQuery: added: ' + term);
+        debug('addQuery: added: ' + term);
         queryList.push(term);
         //gtmn.cout("adding("+gtmn._queries.length+"): "+term);
 
@@ -838,29 +839,35 @@ TRACKMENOT.TMNSearch = function() {
     }
 
     // randomly with arbitrary weights - either get part of query, try extracting keywords or select random words
+    // TODO - optimize the flow a little
     function getSubQuery(query) {
             // My fair guess - estimated distribution of typical querry length
-            var distribution = [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
-            var randomLength = distribution[roll(0, distribution.length - 1)];
             var queryWords = query.split(' ');
-            var queryLength = queryWords.length;
-            var randomWords = queryWords;
-            var keywords = getKeywords(query);
+            var subQuery = query;
             // with arbitrary weights - another fair guess
-            if (Math.random() > 0.5 &&  keywords.length > 0 ){  // try extracting keywords
-                randomWords = randomElement(keywords);
+            if ( Math.random() > 0.5  ){  // try extracting keywords
+                var keywords = getKeywords(query);
+                if ( keywords.length  > 0 ) {
+                    subQuery = randomElement(keywords);
+                    cout('getSubQuery: Random keywords: ' + subQuery  + ' <-- ' + query);
+                }
             } else if (Math.random() < 0.7 ) {                  // select NLP words
-                randomWords = nlpQuery(query);
+                subQuery = nlpQuery(query);
+                cout('getSubQuery: NLP: ' + subQuery  + ' <-- ' + query);
             } else {                                            // select part of query
+                var queryLength = queryWords.length;
+                var distribution = [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
+                var randomLength = distribution[roll(0, distribution.length - 1)];
+                randomLength = Math.min(randomLength, queryLength);
                 //  heavily favor starting at beggining of query
-                var randomLength = Math.min(randomLength, queryLength);
                 var randomStart = roll_beta_left(0, queryLength);
                 debug('randomStart: ' + randomStart + ' randomLength: ' + randomLength);
                 // get query sequence or randomLength (with distribution[] like above)
-                randomWords = queryWords.slice(randomStart, Math.min(randomStart + randomLength, queryLength)).join(' ');
+                subQuery = queryWords.slice(randomStart, Math.min(randomStart + randomLength, queryLength)).join(' ');
+                cout('getSubQuery: Random slice: ' + subQuery + ' <-- ' + query );
             }
-            debug('getSubQuery: ' + randomWords);
-            return randomWords
+
+            return subQuery
             // shuffle Words, get first few (this is random select), join into query term
             // randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
     }
@@ -871,7 +878,7 @@ TRACKMENOT.TMNSearch = function() {
             var text = nlp.text(query);
             var sentences = text.sentences;
             var interesting = [];
-            var interestingPartOfSpeech = ['Noun', 'City', 'Place', 'Organization', 'Person'];
+            var interestingPartOfSpeech = ['Noun', 'Person', 'City', 'Place', 'Organization'];
             for(var i = 0; i < sentences.length; i++) {
                 var terms = sentences[i].terms;
                 for(var j=0; j < terms.length; j++) {
@@ -881,7 +888,7 @@ TRACKMENOT.TMNSearch = function() {
                     }
                 }
             }
-            cout('nlpQuery: ' + interesting.join(' ') + ' <-- ' + query );
+            debug('nlpQuery: ' + interesting.join(' ') + ' <-- ' + query );
 
             if (interesting.length > 0) {
                 return interesting.join(' ');
@@ -899,19 +906,18 @@ TRACKMENOT.TMNSearch = function() {
         var qtype = randomElement(distributionOfQueries);
         while ("undefined" === typeof TMNQueries[qtype] ) {
             qtype = randomElement(distributionOfQueries);
+            debug('randomQuery: while loop: ' + qtype);
         }
         cout('randomQuery: query type: ' + qtype);
-        // var term = 'generic search term'; 
         if (qtype == 'extracted') {
             var queries = TMNQueries[qtype];
             var term = randomElement(queries);
             if (term.split(' ').length > 4 ) {
                 term = getSubQuery(term);
-                // term = nlpQuery(term);
             }
             return term;
         }
-        if (qtype == 'zeitgeist' ) {
+        if (qtype == 'zeitgeist' ) {    // TODO - think of something better here
             var queries = TMNQueries[qtype];
             var term = randomElement(queries); 
             // generic zeitgeist queries make little sense as results are too broad and queries seem unnatural
@@ -919,17 +925,16 @@ TRACKMENOT.TMNSearch = function() {
             var queryset = TMNQueries['rss'];
             queries = randomElement(queryset).words
             termVariation = getSubQuery(randomElement(queries));
-            // termVariation = nlpQuery(randomElement(queries));
             term =  term + ' ' + termVariation;
             return term;
         }
+        // rss 
         if (qtype != 'extracted' && qtype != 'zeitgeist' ) {
             var queryset = TMNQueries[qtype];
             var queries = randomElement(queryset).words
             var term = randomElement(queries);
             if (term.split(' ').length > 4 ) {
                 term = getSubQuery(term);
-                // term = nlpQuery(term);
             }
             return term;
         }
@@ -992,7 +997,7 @@ TRACKMENOT.TMNSearch = function() {
         return logEntry;
     }
 
-   // TODO - not done here
+    // getQuery() --> sendQuery()
     // for now I have removed logic of incremental queries
     function doSearch() {
         // TODO - think of some randomization / mixing / 
