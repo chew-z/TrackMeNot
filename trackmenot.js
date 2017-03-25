@@ -872,22 +872,35 @@ TRACKMENOT.TMNSearch = function() {
             // randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
     }
 
+
+    // True if at least one member of list could be found in array
+    function listInArray(list, array) {
+        var i = list.length;
+        while(i--) {
+            if( array.indexOf( list[i] ) > -1 )
+                return true;
+        }
+        return false
+    }
+
+    // version 8.2 - different syntax
     // get little inteligent and try NLP
     function nlpQuery(query) {
-            let nlp = nlp_compromise;
-            var text = nlp.text(query);
-            var sentences = text.sentences;
             var interesting = [];
-            var interestingPartOfSpeech = ['Noun', 'Person', 'City', 'Place', 'Organization'];
-            for(var i = 0; i < sentences.length; i++) {
-                var terms = sentences[i].terms;
-                for(var j=0; j < terms.length; j++) {
-                    cout('NLP: ' + terms[j].text + " -> " + terms[j].tag);
-                    if ( interestingPartOfSpeech.indexOf( terms[j].tag ) > -1 ) {
-                        interesting.push( terms[j].text );
-                    }
+            var interestingPartOfSpeech = ['Acronym', 'Person', 'City', 'Place', 'Organization'];
+
+            text = nlp(query);
+            var terms = text.terms().data();
+            cout(terms);
+
+            for(var j=0; j < terms.length; j++) {
+                cout('NLP: ' + terms[j].text + " -> " + terms[j].bestTag);
+
+                if ( listInArray( interestingPartOfSpeech, terms[j].tags ) ) {
+                    interesting.push( terms[j].text );
                 }
             }
+
             debug('nlpQuery: ' + interesting.join(' ') + ' <-- ' + query );
 
             if (interesting.length > 0) {
