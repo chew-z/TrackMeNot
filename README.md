@@ -11,6 +11,8 @@ Most of the changes I have made are in the main logic - trackmenot.js
 
 ## So far
 
+* **Important change in logic** - the original extension is trying to be smart at filtering incoming queries and RSS feed titles. It doesn't work well in my opinion - makes them unreadable or sometime makes gibberish of it. I keep _RSS Titles_ and _Extracted query results_ as they are (with some minor cleaning) and then I am trying to be smart about generating new search queries out of it.
+
 * improved import of keywords from RSS feeds - original code had a bugs and imported from only the last RSS in the list, sometimes multiple times
 
 * added more verbose messages to console - trying to understand how it really works
@@ -51,4 +53,4 @@ You have to seed the extension using three types of sources - rss (the extension
 
 I am optimizing mostly for (or against) Google Search ignoring other search engines. At least at the moment.
 
-This extension is a bit schizophrenic cause using XRegExp I am able to proces queries and results also in other scipts then ISO like Chinese or Japanese but at the same time I am using NLP and some other logic that works only for English. Well, it has to stay that way I guess.
+This extension is a bit schizophrenic cause using XRegExp I am able to process queries and results also in other scipts then ISO like Chinese or Japanese but at the same time I am using NLP and some other logic that works only for English. Well, it has to stay that way I guess.
