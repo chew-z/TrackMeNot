@@ -25,7 +25,7 @@ Most of the changes I have made are in the main logic - trackmenot.js
 
 * changed logic of *zeitgeist* queries. But I am still not happy with the results.
 
-* added non-uniform distributions, for example for selecting of query length
+* added non-uniform distributions, for example for selecting query length
 
 * added XregExp.js library - now we could process queries and results in languages other then English
 
@@ -47,4 +47,8 @@ Even more if you enable burst mode the extension will start sending a flood of q
 
 You have to seed the extension using three types of sources - rss (the extension is extracting titles form RSS feeds) and zeitgest (it could be edited in code for now) - some everlasting popular search terms like youtube or facebook. Later on the extension will start scrapping search results and using them as seed for generating new queries.
 
+## Remarks
 
+I am optimizing mostly for (or against) Google Search ignoring other search engines. At least at the moment.
+
+This extension is a bit schizophrenic cause using XRegExp I am able to proces queries and results also in other scipts then ISO like Chinese or Japanese but at the same time I am using NLP and some other logic that works only for English. Well, it has to stay that way I guess.

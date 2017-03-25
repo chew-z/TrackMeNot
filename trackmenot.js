@@ -730,12 +730,12 @@ TRACKMENOT.TMNSearch = function() {
         var feedObject = {};
         feedObject.name = feedTitles[0].firstChild.nodeValue;
         feedObject.words = [];
-        // debug('addRSSTitles : ' + feedTitles[0].firstChild.nodeValue);
+        debug('addRSSTitles : ' + feedTitles[0].firstChild.nodeValue);
         for (var i = 1; i < feedTitles.length; i++) {
             if (feedTitles[i].firstChild) {
                 rssTitle = feedTitles[i].firstChild.nodeValue;
             }
-            rssTitle = rssTitle.replace(/\d{1,3}\.\s/g, ''); //Leading numbers in lists like iTunes Top 100
+            rssTitle = rssTitle.replace(/\d{1,3}\.\s/g, ''); // remove leading numbers in lists like iTunes Top 100
             // rssTitle = nlp_compromise.text(rssTitle).text();
             // rssTitles = rssTitle.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
 
