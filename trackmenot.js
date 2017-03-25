@@ -904,7 +904,7 @@ TRACKMENOT.TMNSearch = function() {
         // var qtype = randomElement(typeoffeeds)  // This should be weighted or changed - now some queries dominate others - too many zeitgeist type queries
         var distributionOfQueries = ["zeitgeist", "rss", "rss", "extracted", "extracted", "extracted"];
         var qtype = randomElement(distributionOfQueries);
-        while ("undefined" === typeof TMNQueries[qtype] ) {
+        while (typeof TMNQueries[qtype] === "undefined") {
             qtype = randomElement(distributionOfQueries);
             debug('randomQuery: while loop: ' + qtype);
         }
