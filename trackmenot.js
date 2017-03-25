@@ -15,7 +15,6 @@
  ********************************************************************************/
 var _ = chrome.i18n.getMessage;
 
-
 if (!TRACKMENOT) var TRACKMENOT = {};
 
 TRACKMENOT.TMNSearch = function() {
@@ -64,7 +63,7 @@ TRACKMENOT.TMNSearch = function() {
 
     var skipex = new Array(
         /mins ago/, /days ago/, /hours ago/, /1 day ago/, /1 hour ago/, /200/i, /201/i,
-        /Thesaurus/i,
+        /Thesaurus/i, /Breaking news/, /Latest news/, /Top stories/, /headlines/,
         /calendar/i, /advanced/i, /click /i, /terms/i, /Groups/i,
         /Images/, /Maps/, /search/i, /cache/i, /similar/i, /&#169;/,
         /sign in/i, /help[^Ss]/i, /download/i, /print/i, /Books/i, /rss/i,
@@ -736,7 +735,7 @@ TRACKMENOT.TMNSearch = function() {
                 rssTitle = feedTitles[i].firstChild.nodeValue;
             }
             rssTitle = rssTitle.replace(/\d{1,3}\.\s/g, ''); //Leading numbers in lists like iTunes Top 100
-            rssTitle = nlp_compromise.text(rssTitle).text();
+            // rssTitle = nlp_compromise.text(rssTitle).text();
             // rssTitles = rssTitle.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
 
             addQuery(rssTitle, feedObject.words);
@@ -842,18 +841,17 @@ TRACKMENOT.TMNSearch = function() {
     function getSubQuery(query) {
             // My fair guess - estimated distribution of typical querry length
             var distribution = [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
-            var randomLength = distribution[roll(0, distribution.length -1)];
+            var randomLength = distribution[roll(0, distribution.length - 1)];
             var queryWords = query.split(' ');
             var queryLength = queryWords.length;
             var randomWords = queryWords;
             var keywords = getKeywords(query);
             // with arbitrary weights - another fair guess
-            if (Math.random() > 0.3 &&  keywords.length > 0 ){  // try extracting keywords
+            if (Math.random() > 0.5 &&  keywords.length > 0 ){  // try extracting keywords
                 randomWords = randomElement(keywords);
-            } else if (Math.random() < 0.3 ) {                  //  select random words
-                // shuffle Words, get first few (this is random select), join into query term
-                randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
-            } else {                                            // get part of query
+            } else if (Math.random() < 0.7 ) {                  // select NLP words
+                randomWords = nlpQuery(query);
+            } else {                                            // select part of query
                 //  heavily favor starting at beggining of query
                 var randomLength = Math.min(randomLength, queryLength);
                 var randomStart = roll_beta_left(0, queryLength);
@@ -863,6 +861,33 @@ TRACKMENOT.TMNSearch = function() {
             }
             debug('getSubQuery: ' + randomWords);
             return randomWords
+            // shuffle Words, get first few (this is random select), join into query term
+            // randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
+    }
+
+    // get little inteligent and try NLP
+    function nlpQuery(query) {
+            let nlp = nlp_compromise;
+            var text = nlp.text(query);
+            var sentences = text.sentences;
+            var interesting = [];
+            var interestingPartOfSpeech = ['Noun', 'City', 'Place', 'Organization', 'Person'];
+            for(var i = 0; i < sentences.length; i++) {
+                var terms = sentences[i].terms;
+                for(var j=0; j < terms.length; j++) {
+                    cout(terms[j].text + " -> " + terms[j].tag);
+                    if ( interestingPartOfSpeech.indexOf( terms[j].tag ) > -1 ) {
+                        interesting.push( terms[j].text );
+                    }
+                }
+            }
+            cout('nlpQuery: ' + interesting.join(' ') + ' <-- ' + query );
+
+            if (interesting.length > 0) {
+                return interesting.join(' ');
+            } else {
+                return query;
+            }
     }
 
 
@@ -872,46 +897,46 @@ TRACKMENOT.TMNSearch = function() {
         // var qtype = randomElement(typeoffeeds)  // This should be weighted or changed - now some queries dominate others - too many zeitgeist type queries
         var distributionOfQueries = ["zeitgeist", "rss", "rss", "extracted", "extracted", "extracted"];
         var qtype = randomElement(distributionOfQueries);
+        while ("undefined" === typeof TMNQueries[qtype] ) {
+            qtype = randomElement(distributionOfQueries);
+        }
         cout('randomQuery: query type: ' + qtype);
-        var queries = [];
-        var term = 'generic search term';
-         // TODO - at the moment zeitgeist is overweight and results are plain silly
-        if (qtype == 'zeitgeist' ) {
-            queries = TMNQueries[qtype];
-            term = randomElement(queries); 
-            // generic zeitgeist queries make little sense as results are too broad and queries seem unnatural
-            // like 'facebook' vs 'facebook Prince' or 'youtube' vs 'youtube Ed Sheeran'
-                       var queryset = TMNQueries['rss'];
-            queries = randomElement(queryset).words
-            termVariation = getSubQuery(randomElement(queries));
-            term =  term + ' ' + termVariation;
-        }
+        // var term = 'generic search term'; 
         if (qtype == 'extracted') {
-            queries = TMNQueries[qtype];
-            // Starting in clean state 'extracted' queries are empty. Use 'rss' instead.
-            if (queries === undefined || queries === null) {
-                qtype = 'rss';
-            } else {
-                term = randomElement(queries);
-                if (term.split(' ').length > 4 ) {
-                    term = getSubQuery(term);
-                }
-            }
-        }
-        // rss queries
-        if (qtype != 'extracted' && qtype != 'zeitgeist' ) {
-            var queryset = TMNQueries[qtype];
-            queries = randomElement(queryset).words
-            term = randomElement(queries);
+            var queries = TMNQueries[qtype];
+            var term = randomElement(queries);
             if (term.split(' ').length > 4 ) {
                 term = getSubQuery(term);
+                // term = nlpQuery(term);
             }
+            return term;
         }
-        // debug('randomQuery: term: ' + term);
+        if (qtype == 'zeitgeist' ) {
+            var queries = TMNQueries[qtype];
+            var term = randomElement(queries); 
+            // generic zeitgeist queries make little sense as results are too broad and queries seem unnatural
+            // like 'facebook' vs 'facebook Prince' or 'youtube' vs 'youtube Ed Sheeran'
+            var queryset = TMNQueries['rss'];
+            queries = randomElement(queryset).words
+            termVariation = getSubQuery(randomElement(queries));
+            // termVariation = nlpQuery(randomElement(queries));
+            term =  term + ' ' + termVariation;
+            return term;
+        }
+        if (qtype != 'extracted' && qtype != 'zeitgeist' ) {
+            var queryset = TMNQueries[qtype];
+            var queries = randomElement(queryset).words
+            var term = randomElement(queries);
+            if (term.split(' ').length > 4 ) {
+                term = getSubQuery(term);
+                // term = nlpQuery(term);
+            }
+            return term;
+        }
+        debug('randomQuery: term: ' + term);
         if (!term || term.length < 1)
             throw new Error(" randomQuery: term='" + term);
 
-        return term;
     }
 
 
