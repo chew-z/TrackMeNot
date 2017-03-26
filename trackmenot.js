@@ -910,6 +910,58 @@ TRACKMENOT.TMNSearch = function() {
     }
 
 
+    function randomOrganization(queryset) {
+            let i = queryset.length;
+            let organization = [];
+            while(i--) {
+                let o = nlp(queryset[i]).organizations().data();
+                // debug(p);
+                let j = o.length;
+                while(j--) {
+                    cout(o[j].text);
+                    organization.push(o[j].text);
+                }
+            }
+            cout(organization);
+            if (organization.length > 0)
+                return randomElement(organization).replace(/^\W+/, '');
+    }
+
+
+    function randomPerson(queryset) {
+            let i = queryset.length;
+            let person = [];
+            while(i--) {
+                let p = nlp(queryset[i]).people().data();
+                // debug(p);
+                let j = p.length;
+                while(j--) {
+                    cout(p[j].text);
+                    person.push(p[j].text);
+                }
+            }
+            cout(person);
+            if (person.length > 0)
+                return randomElement(person).replace(/^\W+/, '');
+    }
+
+
+    function randomPlace(queryset) {
+            let i = queryset.length;
+            let place = [];
+            while(i--) {
+                let p = nlp(queryset[i]).places().data();
+                // debug(p);
+                let j = p.length;
+                while(j--) {
+                    cout(p[j].text);
+                    place.push(p[j].text);
+                }
+            }
+            cout(place);
+            if (place.length > 0)
+                return randomElement(place).replace(/^\W+/, '');
+    }
 
     // here query randomization happens - randomize query type and select random query
     // TODO - improve logic - already improved but ..
@@ -924,6 +976,8 @@ TRACKMENOT.TMNSearch = function() {
         if (qtype == 'extracted') {
             let queries = TMNQueries[qtype];
             debug(queries);
+            let place = randomPlace(queries);
+            cout('Place: ' + place);
             let term = randomElement(queries);
             if (term.split(' ').length > 4 ) {
                 term = getSubQuery(term);
@@ -935,10 +989,24 @@ TRACKMENOT.TMNSearch = function() {
             let term = randomElement(queries); 
             // generic zeitgeist queries make little sense as results are too broad and queries seem unnatural
             // like 'facebook' vs 'facebook Prince' or 'youtube' vs 'youtube Ed Sheeran'
-            var queryset = TMNQueries['rss'];
+            let queryset = TMNQueries['rss'];
             queries = randomElement(queryset).words
-            termVariation = nlpQuery(randomElement(queries));
-            term =  term + ' ' + termVariation;
+            let person = randomPerson(queries);
+            let place = randomPlace(queries);
+            let organization = randomOrganization(queries);
+            cout('Person: ' + person);
+            cout('Place: ' + place);
+            cout('Organization: ' + organization);
+            if (person)
+                term =  term + ' ' + person;
+            else if(place)
+                term = term + ' ' + place;
+            else if(organization)
+                term = term + ' ' + organization;
+            else{
+                let termVariation = nlpQuery(randomElement(queries));
+                term =  term + ' ' + termVariation;
+            }
             return term;
         }
         // rss 
@@ -946,6 +1014,8 @@ TRACKMENOT.TMNSearch = function() {
             let queryset = TMNQueries[qtype];
             let queries = randomElement(queryset).words
             let term = randomElement(queries);
+            let person = randomPerson(queries);
+            cout('Person: ' + person);
             if (term.split(' ').length > 4 ) {
                 term = getSubQuery(term);
             }
