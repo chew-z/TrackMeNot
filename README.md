@@ -17,6 +17,10 @@ Most of the changes I have made are in the main logic - trackmenot.js
 
 * added more verbose messages to console - trying to understand how it really works
 
+* implemented function for guessing keywords - getKeywords()
+
+* implemented function for simple NLP analysis - nlpQuery() - finding topics in a sentence, People, Places, Acronyms, Organizations or Noun/Gerund.
+
 * re-factored code for some functions - changed names to more descriptive
 
 * changed logic for random selection of queries - **this is where I am playing currently** testing various ideas so it is evolving and might be suboptimal
