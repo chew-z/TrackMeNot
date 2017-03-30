@@ -10,7 +10,7 @@
     "default_popup": "tmn_menu.html"
   },
   "background": {
-    "scripts": ["nlp_compromise.min.js", "xregexp-all.js", "trackmenot.js"]
+    "scripts": ["compromise.es6.min.js", "xregexp-all.js", "trackmenot.js"]
   },
   "options_page": "options.html",
   "content_scripts": [
@@ -18,9 +18,9 @@
       "matches": ["http://*/*","https://*/*"],
       "js": ["tmn_search.js"],
       "run_at": "document_start",
-      "all_frames" : true  
+      "all_frames" : true
     }
-  ],  
+  ],
   "permissions": [
   "tabs","https://*/*","http://*/*","webNavigation","storage"
   ]
