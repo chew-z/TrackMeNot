@@ -13,6 +13,8 @@
     You should have received a copy of the GNU General Public License
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************************/
+// @flow
+// @FlowNotIssue
 var _ = chrome.i18n.getMessage;
 
 if (!TRACKMENOT) var TRACKMENOT = {};
@@ -57,7 +59,6 @@ TRACKMENOT.TMNSearch = function() {
     var currentTMNURL = '';
     var tmn_option_tab = null;
     var worker_tab, worker_opt;
-
 
     //var search_script = [data.url("jquery.js"),data.url("tmn_search.js")];
 
@@ -116,21 +117,17 @@ TRACKMENOT.TMNSearch = function() {
             anchorlink.indexOf('https') != 0);
     }
 
-
     var getButton_google = " var getButton = function(  ) {var button = getElementsByAttrValue(document,'button', 'name', 'btnG' );     if ( !button ) button = getElementsByAttrValue(document,'button', 'name', 'btnK' );return button;}"
     var getButton_yahoo = " var getButton = function(  ) {return getElementsByAttrValue(document,'input', 'class', 'sbb' ); } "
     var getButton_bing = " var getButton = function(  ) {return document.getElementById('sb_form_go');}  "
     var getButton_aol = " var getButton = function (  ) {return document.getElementById('csbbtn1');   }"
     var getButton_baidu = " var getButton = function (  ){ return getElementsByAttrValue(document,'input', 'value', '????' ); }"
 
-
-
     SearchBox_google = "var searchbox = function( ) { return getElementsByAttrValue(document,'input', 'name', 'q' ); } "
     SearchBox_yahoo = "var searchbox = function(  ) { return document.getElementById('yschsp');}"
     SearchBox_bing = "var searchbox = function(  ) {return document.getElementById('sb_form_q'); } "
     SearchBox_aol = "var searchbox = function(  ) {return document.getElementById('csbquery1');  }"
     SearchBox_baidu = "var searchbox = function(  ) {return document.getElementById('kw');}"
-
 
     var suggest_google = ['gsr', 'td', function(elt) {
         return (elt.hasAttribute('class') && elt.getAttribute('class') == 'gac_c')
@@ -152,19 +149,16 @@ TRACKMENOT.TMNSearch = function() {
         return (elt.hasAttribute('class') && elt.getAttribute('class') == 'acs')
     }]
 
-
-
-
     var engines = [{
-            'id': 'google',
-            'name': 'Google Search',
-            'urlmap': "https://www.google.com/search?hl=en&q=|",
-            'regexmap': "^(https?:\/\/[a-z]+\.google\.(co\\.|com\\.)?[a-z]{2,3}\/(search){1}[\?]?.*?[&\?]{1}q=)([^&]*)(.*)$",
-            "host": "(www\.google\.(co\.|com\.)?[a-z]{2,3})$",
-            "testad": "var testad = function(ac,al) {return ( al&& (ac=='l'  || ac=='l vst')&& al.indexOf('http')==0 && al.indexOf('https')!=0);}",
-            'box': SearchBox_google,
-            'button': getButton_google
-        },
+        'id': 'google',
+        'name': 'Google Search',
+        'urlmap': "https://www.google.com/search?hl=en&q=|",
+        'regexmap': "^(https?:\/\/[a-z]+\.google\.(co\\.|com\\.)?[a-z]{2,3}\/(search){1}[\?]?.*?[&\?]{1}q=)([^&]*)(.*)$",
+        "host": "(www\.google\.(co\.|com\.)?[a-z]{2,3})$",
+        "testad": "var testad = function(ac,al) {return ( al&& (ac=='l'  || ac=='l vst')&& al.indexOf('http')==0 && al.indexOf('https')!=0);}",
+        'box': SearchBox_google,
+        'button': getButton_google
+    },
         {
             'id': 'yahoo',
             'name': 'Yahoo! Search',
@@ -207,11 +201,8 @@ TRACKMENOT.TMNSearch = function() {
         }
     ]
 
-
-
-
     function getEngIndexById(id) {
-        for (var i = 0; i < engines.length; i++) {
+        for (let i = 0; i < engines.length; i++) {
             if (engines[i].id == id) return i
         }
         return -1
@@ -223,9 +214,6 @@ TRACKMENOT.TMNSearch = function() {
         })[0]
     }
 
-
-
-
     function updateEngineList() {
         chrome.storage.local.set({
             engines: JSON.stringify(engines)
@@ -233,8 +221,6 @@ TRACKMENOT.TMNSearch = function() {
         sendMessageToOptionScript("TMNSendEngines", engines);
         sendOptionToTab();
     }
-
-
 
     function sendMessageToOptionScript(title, message) {
         chrome.runtime.sendMessage({
@@ -247,7 +233,6 @@ TRACKMENOT.TMNSearch = function() {
         worker_opt.port.on(title, handler)
     }
 
-
     function sendMessageToPanelScript(title, message) {
         chrome.runtime.sendMessage(title, message)
     }
@@ -255,9 +240,6 @@ TRACKMENOT.TMNSearch = function() {
     function handleMessageFromPanelScript(title, handler) {
         tmn_panel.port.on(title, handler)
     }
-
-
-
 
     function sendOptionParameters() {
         debug("Sending perameters")
@@ -291,8 +273,6 @@ TRACKMENOT.TMNSearch = function() {
         handleMessageFromOptionScript("TMNAddEngine",addEngine)
         handleMessageFromOptionScript("TMNDelEngine",delEngine)*/
     }
-
-
 
     function sendOptionToTab() {
         var tab_inputs = {
@@ -336,7 +316,6 @@ TRACKMENOT.TMNSearch = function() {
         saveOptions();
     }
 
-
     function changeTabStatus(useT) {
         if (useT == useTab) return;
         if (useT) {
@@ -347,7 +326,6 @@ TRACKMENOT.TMNSearch = function() {
             deleteTab();
         }
     }
-
 
     function iniTab(tab) {
         tmn_tab_id = tab.id;
@@ -382,7 +360,6 @@ TRACKMENOT.TMNSearch = function() {
         }
     }
 
-
     function addEngine(param) {
         var name = param.name;
         var urlmap = param.urlmap;
@@ -398,8 +375,6 @@ TRACKMENOT.TMNSearch = function() {
         debug("Added engine : " + new_engine.name + " url map is " + new_engine.urlmap)
         updateEngineList
     }
-
-
 
     function delEngine(param) {
         var del_engine = param.engine;
@@ -462,10 +437,9 @@ TRACKMENOT.TMNSearch = function() {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-
     function randomElement(array) {
         if ( array.length == 0 ) 
-           throw new Error(" randomElement: empty array " + array);
+            throw new Error(" randomElement: empty array " + array);
         else if (array.length == 1)
             return array[0];
         else {
@@ -473,76 +447,70 @@ TRACKMENOT.TMNSearch = function() {
             // debug('randomElement: ' + array[index]);
             return array[index];
         }
-}
-
+    }
 
     function box_muller() {
-// Normal distribution using Box-Muller transform.
-    var u = 1 - Math.random(); // Subtraction to flip [0, 1) to (0, 1].
-    var v = 1 - Math.random();
-    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
-}
-
+        // Normal distribution using Box-Muller transform.
+        let u = 1 - Math.random(); // Subtraction to flip [0, 1) to (0, 1].
+        let v = 1 - Math.random();
+        return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+    }
 
     // https://stackoverflow.com/questions/16110758
-   function beta() {
+    function beta() {
         return Math.pow(Math.sin(Math.random() * Math.PI/2), 2)
     }
 
-
     function beta_left() {
-        var b = beta();
-        return bl = (b < 0.5) ? 2*b : 2*(1-b);
+        let b = beta();
+        return (b < 0.5) ? 2*b : 2*(1-b);
     }
-
 
     function roll_beta_left(min, max) {
-        return r = Math.floor(beta_left() * (max - min + 1)) + min;
+        return Math.floor(beta_left() * (max - min + 1)) + min;
     }
-
 
     function roll_gauss(min, max) {
         return Math.floor(box_muller() * (max - min + 1)) + min;
     }
 
-
     function shuffleArray(a) {
-    var currentIndex = a.length, tempValue, randomIndex;
+        let currentIndex = a.length, tempValue, randomIndex;
 
-  // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-    // Pick a remaining element...
-        randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-    // And swap it with the current element.
-    tempValue = a[currentIndex];
-    a[currentIndex] = a[randomIndex];
-    a[randomIndex] = tempValue;
-  }
+        // While there remain elements to shuffle...
+        while (0 !== currentIndex) {
+            // Pick a remaining element...
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex -= 1;
+            // And swap it with the current element.
+            tempValue = a[currentIndex];
+            a[currentIndex] = a[randomIndex];
+            a[randomIndex] = tempValue;
+        }
 
-  return a;
-}
+        return a;
+    }
 
     // Extracts possible keywords from text
     // Uppercase followed by more Uppercase - most likely to be a keyword
     // Saddly doesn't work for non-Latin languages - TODO?
     function getKeywords(query) {
-        var queryWords = query.split(' ');
-        var i = queryWords.length;
-        var rank = new Array(queryWords.length);
-        var upper = new RegExp(/[A-Z]|[\u0080-\u024F]/);
-        var digit = new RegExp(/[0-9]/);
+        let queryWords = query.split(' ');
+        let i = queryWords.length;
+        let rank = new Array(queryWords.length);
+        let upper = new RegExp(/[A-Z]|[\u0080-\u024F]/);
+        let digit = new RegExp(/[0-9]/);
 
         // debug('getKeywords: ' + query);
         rank.fill(0);
         while (i--) { // 1st loop - rank words begining with Uppercase +1
-            var word = queryWords[i]
+            let word = queryWords[i]
             if ( word.length < 1 ) {            // empty words - rank -1
                 rank[i] = -1;
                 continue;
             }
             // debug('getKeywords: ' + word);
-            var s = word.charAt(0);
+            let s = word.charAt(0);
             if  ( s === s.toUpperCase() && upper.test(s) ) { // rank +1
                 rank[i] = 1;
             } else  if  ( digit.test(s) ) {     // digits rank -1
@@ -558,10 +526,10 @@ TRACKMENOT.TMNSearch = function() {
         }
         // debug('getKeywords: ' + rank);
         i =  0;
-        var keyWords = [];
+        let keyWords = [];
         while (i < queryWords.length) { // 3rd loop - select sequence of two or more
             if( rank[i] > 1 ) {
-                var keyword = queryWords.slice(i, i + rank[i]).join(' ');
+                let keyword = queryWords.slice(i, i + rank[i]).join(' ');
                 // debug('getKeywords: ' + keyword);
                 keyWords.push(keyword);
                 i = i + rank[i]; // and move iteration to the end of sequence
@@ -617,7 +585,7 @@ TRACKMENOT.TMNSearch = function() {
 
     function checkForSearchUrl(url) {
         var result = null;
-        for (var i = 0; i < engines.length; i++) {
+        for (let i = 0; i < engines.length; i++) {
             var eng = engines[i]
             var regex = eng.regexmap;
             debug("  regex: " + regex + "  ->\n                   " + url);
@@ -637,30 +605,27 @@ TRACKMENOT.TMNSearch = function() {
                 return result;
             }
             debug("REGEX_ERROR: " + url);
-            for (var i in result)
+            for (let i in result)
                 debug(" **** " + i + ")" + result[i])
         }
         result.push(eng.id);
         return result;
     }
 
-
     function isBursting() {
         return burstEnabled && burstCount > 0;
     }
-
 
     function chooseEngine(engines) {
         return engines[Math.floor(Math.random() * engines.length)]
     }
 
-
     function validateFeeds(param) {
         TMNQueries.rss = [];
         feedList = param.feeds;
         debug("Validating the feeds: " + feedList)
-        var feeds = feedList.split(/~/);
-        for (var i = 0; i < feeds.length; i++) {
+        let feeds = feedList.split(/~/);
+        for (let i = 0; i < feeds.length; i++) {
             debug("validateFeeds:  " + feeds[i]);
             doRssFetch(feeds[i]);
         }
@@ -675,13 +640,13 @@ TRACKMENOT.TMNSearch = function() {
             debug("extractQueries: No HTML!");
             return;
         }
-        var possibleSearchResults = html.split("<span class=\"st\">")
+        let possibleSearchResults = html.split("<span class=\"st\">")
         if (typeof TMNQueries.extracted == 'undefined') {
             TMNQueries.extracted = [];
         }
-        var i = possibleSearchResults.length;
+        let i = possibleSearchResults.length;
         while (i--) {
-            var singleSearchResult = possibleSearchResults[i].split('</span>')[0]
+            let singleSearchResult = possibleSearchResults[i].split('</span>')[0]
             // debug('extractQueries: ' + singleSearchResult);
             // Not too short, not too long
             if (singleSearchResult.length < 16 || singleSearchResult.length > 256) continue;
@@ -699,7 +664,7 @@ TRACKMENOT.TMNSearch = function() {
             // remove English language glue
             // var cleanSearchResult = singleSearchResult.replace(/ and | with | a | an | any | it | in | has /gm, ' ');
 
-            var cleanSearchResult = singleSearchResult;
+            let cleanSearchResult = singleSearchResult;
             // return results (addQuery() does some more cleaning)
             cout('extractQueries: cleaned and added: ' + cleanSearchResult);
             addQuery(cleanSearchResult, TMNQueries.extracted);
@@ -707,27 +672,26 @@ TRACKMENOT.TMNSearch = function() {
         //  Here we prune extracted queries
         // keeping maximum of 200
         while (TMNQueries.extracted.length > 200) {
-           var rand = roll(0, TMNQueries.extracted.length - 1);
-           TMNQueries.extracted.splice(rand, 1);
+            let r = roll(0, TMNQueries.extracted.length - 1);
+            TMNQueries.extracted.splice(r, 1);
         }
         // debug(TMNQueries.extracted);
     }
 
-
     // Extract titles from RSS feed - used as alternative to addRssTitles()
     function extractRssTitles(xmlData, feedUrl) {
-        var rssTitle = "";
-        var feedTitles = xmlData.getElementsByTagName("title");
+        let rssTitle = "";
+        let feedTitles = xmlData.getElementsByTagName("title");
         // debug(feedTitles);
         if (!feedTitles || feedTitles.length < 2) {
             cerr("no items(" + feedTitles + ") for rss-feed: " + feedUrl);
             return 0;
         }
-        var feedObject = {};
+        let feedObject = {};
         feedObject.name = feedTitles[0].firstChild.nodeValue;
         feedObject.words = [];
         debug('addRSSTitles : ' + feedTitles[0].firstChild.nodeValue);
-        for (var i = 1; i < feedTitles.length; i++) {
+        for (let i = 1; i < feedTitles.length; i++) {
             if (feedTitles[i].firstChild) {
                 rssTitle = feedTitles[i].firstChild.nodeValue;
             }
@@ -742,21 +706,19 @@ TRACKMENOT.TMNSearch = function() {
         return 1;
     }
 
-
     function isBlackList(term) {
         if (!useBlackList) return false;
-        var words = term.split(/\W/g);
-        for (var i = 0; i < words.length; i++) {
+        let words = term.split(/\W/g);
+        for (let i = 0; i < words.length; i++) {
             if (kwBlackList.indexOf(words[i].toLowerCase()) >= 0)
                 return true;
         }
         return false;
     }
 
-
     //TODO - improve skipex - only crap sentences ? 
     function querySkip(a) {
-        for (i = 0; i < skipex.length; i++) {
+        for (let i = 0; i < skipex.length; i++) {
             if (skipex[i].test(a))
                 return skipex[i];
         }
@@ -768,8 +730,8 @@ TRACKMENOT.TMNSearch = function() {
     function addQuery(term, queryList) {
         // TODO - this is duplicating some effort from extractQuerries() 
         debug('addQuery: received: ' + term);
-
-        var notNLZ = new XRegExp('[^\\p{N}\\p{L}\\p{Z}@\-]+', 'g'); // NLZ - number, letter, separator
+        // @FlowNotIssue
+        let notNLZ = new XRegExp('[^\\p{N}\\p{L}\\p{Z}@\-]+', 'g'); // NLZ - number, letter, separator
         term = XRegExp.replace(term, notNLZ, '');
         term = term.replace(/\s\s+/g, ' ');
 
@@ -793,17 +755,16 @@ TRACKMENOT.TMNSearch = function() {
         return true;
     }
 
-
     // This had been refactored significantly as it had bugs and poor logic
     function doRssFetch(feedUrl) {
         debug('doRSSFetch: ' + feedUrl);
         try {
-            var req = new XMLHttpRequest();
+            let req = new XMLHttpRequest();
             req.open('GET', feedUrl, true); // false == not async but this is depreciated
             req.onreadystatechange = function() {
                 if (req.readyState == 4 && req.status == 200 && req.responseXML != null) {
                     debug("doRSSFetch: Recieved feed from " + feedUrl);
-                    var adds = extractRssTitles(req.responseXML, feedUrl);
+                    let adds = extractRssTitles(req.responseXML, feedUrl);
                     // debug(req.responseXML);
                     // debug(req.responseText);
                 }
@@ -816,17 +777,15 @@ TRACKMENOT.TMNSearch = function() {
         }
     }
 
-
-    // True if if intersection of array A & array B not empty
+    // True if intersection of array A & array B not empty
     function isIntersection(a, b) {
-        var i = a.length;
+        let i = a.length;
         while(i--) {
             if( b.indexOf( a[i] ) > -1 )
                 return true;
         }
         return false
     }
-
 
     // version 8.2 of nlp_compromise is using different syntax then ver. 6 
     // get little inteligent and try NLP
@@ -842,7 +801,7 @@ TRACKMENOT.TMNSearch = function() {
             debug(terms);
             debug(topics);
 
-            for(var j=0; j < terms.length; j++) {
+            for(let j=0; j < terms.length; j++) {
                 debug('nlpQuery: tags: ' + terms[j].text + ' : ' + terms[j].tags.join(' - '));
                 if ( isIntersection( interestingPartOfSpeech, terms[j].tags ) ) {
                     interesting.push( terms[j].text );
@@ -877,7 +836,6 @@ TRACKMENOT.TMNSearch = function() {
             }
     }
 
-
     // randomly with arbitrary weights - either get part of query, try extracting keywords or select random words
     // TODO - optimize the flow a little
     function getSubQuery(query) {
@@ -909,11 +867,11 @@ TRACKMENOT.TMNSearch = function() {
             // randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
     }
 
-
     function randomOrganization(queryset) {
             let i = queryset.length;
             let organization = [];
             while(i--) {
+                // @FlowNotIssue
                 let o = nlp(queryset[i]).organizations().data();
                 // debug(p);
                 let j = o.length;
@@ -927,11 +885,11 @@ TRACKMENOT.TMNSearch = function() {
                 return randomElement(organization).replace(/^\W+/, '');
     }
 
-
     function randomPerson(queryset) {
             let i = queryset.length;
             let person = [];
             while(i--) {
+                // @FlowNotIssue
                 let p = nlp(queryset[i]).people().data();
                 // debug(p);
                 let j = p.length;
@@ -945,11 +903,11 @@ TRACKMENOT.TMNSearch = function() {
                 return randomElement(person).replace(/^\W+/, '');
     }
 
-
     function randomPlace(queryset) {
             let i = queryset.length;
             let place = [];
             while(i--) {
+                // @FlowNotIssue
                 let p = nlp(queryset[i]).places().data();
                 // debug(p);
                 let j = p.length;
@@ -1027,17 +985,15 @@ TRACKMENOT.TMNSearch = function() {
 
     }
 
-
     // Much much shoter then original which had some weird logic here
     function getQuery() {
-        var term = randomQuery();
+        let term = randomQuery();
         term = chomp(term);
         term = term.replace(/^\s+/, ''); //remove the first space // if (term[0] == ' ') term = term.substr(1); 
         if (Math.random() < 0.8) term = term.toLowerCase(); 
                 cout('getQuery: term: ' + term);
         return term;
     }
-
 
     function readDHSList() {
         TMNQueries.dhs = [];
@@ -1105,19 +1061,19 @@ TRACKMENOT.TMNSearch = function() {
     // getQuery() --> sendQuery()
     // for now I have removed logic of incremental queries
     function doSearch() {
-        var newquery = getQuery();
+        let newquery = getQuery();
         try {
             sendQuery(newquery);
         } catch (e) {
             cerr("error in doSearch", e);
         }
     }
-   
+
     // The else part of sending queries had been re-factored similiar to doRSSFetch
     function sendQuery(queryToSend) {
         tmn_scheduledSearch = false;
         cout("Engine: " + engine)
-        var url = getEngineById(engine).urlmap;
+        let url = getEngineById(engine).urlmap;
         // var isIncr = (queryToSend == null);
         if (!queryToSend) { 
                 cout('sendQuery error! queryToSend is null')
@@ -1126,7 +1082,7 @@ TRACKMENOT.TMNSearch = function() {
 
         if (useTab) {
             if (getTMNTab() == -1) createTab();
-            var TMNReq = {
+            let TMNReq = {
                 tmnQuery: queryToSend,
                 tmnEngine: getEngineById(engine),
                 allEngines: engines,
@@ -1142,13 +1098,13 @@ TRACKMENOT.TMNSearch = function() {
             }
 
         } else {
-            var queryUrl = queryToURL(url, queryToSend);
+            let queryUrl = queryToURL(url, queryToSend);
             // debug('url: ' + url);
             cout("The encoded URL is " + queryUrl);
             updateOnSend(queryToSend);
             currentTMNURL = queryUrl;
             try {
-                var req = new XMLHttpRequest();
+                let req = new XMLHttpRequest();
                 req.open('GET', queryUrl, true); // false == not async
                 req.onreadystatechange = function() {
                     if (req.readyState == 4 && req.status == 200 && req.responseText != null) {
@@ -1157,7 +1113,7 @@ TRACKMENOT.TMNSearch = function() {
                         cout("sendQuery: Recieved search results from " + queryUrl);
                         // debug(req.responseXML);
                         // debug(req.responseText);
-                        var logEntry = {
+                        let logEntry = {
                             type: 'query',
                             engine: engine,
                             mode: tmn_mode,
@@ -1179,7 +1135,6 @@ TRACKMENOT.TMNSearch = function() {
         }
     }
 
-
     function queryToURL(url, query) {
         if (Math.random() < 0.76)
             query = query.toLowerCase();
@@ -1195,8 +1150,6 @@ TRACKMENOT.TMNSearch = function() {
         currentTMNURL = taburl.url;
         debug("currentTMNURL is :" + currentTMNURL)
     }
-
-
 
     function rescheduleOnError() {
         var pauseAfterError = Math.max(2 * tmn_timeout, 60000);
@@ -1272,7 +1225,6 @@ TRACKMENOT.TMNSearch = function() {
             }
     }
 
-
     function saveOptions() {
         //ss.storage.kw_black_list = kwBlackList.join(",");
         var options = getOptions();
@@ -1281,7 +1233,6 @@ TRACKMENOT.TMNSearch = function() {
         localStorage["gen_queries"] = JSON.stringify(TMNQueries);
 
     }
-
 
     function getOptions() {
         var options = {};
@@ -1299,7 +1250,6 @@ TRACKMENOT.TMNSearch = function() {
         return options;
     }
 
-
     function initOptions() {
         enabled = true;
         timeout = 90000;
@@ -1312,7 +1262,6 @@ TRACKMENOT.TMNSearch = function() {
         saveLogs = true;
         disableLogs = false;
     }
-
 
     function restoreOptions() {
         if (!localStorage["options_tmn"]) {
@@ -1345,12 +1294,10 @@ TRACKMENOT.TMNSearch = function() {
         }
     }
 
-
     function toggleTMN() {
         enabled = !enabled
         return enabled;
     }
-
 
     function restartTMN() {
         createTab();
@@ -1363,7 +1310,6 @@ TRACKMENOT.TMNSearch = function() {
         });
         scheduleNextSearch(4000);
     }
-
 
     function stopTMN() {
         enabled = false;
@@ -1384,7 +1330,6 @@ TRACKMENOT.TMNSearch = function() {
         window.clearTimeout(tmn_errTimeout);
     }
 
-
     function preserveTMNTab() {
         if (useTab && enabled) {
             tmn_tab = null;
@@ -1394,12 +1339,10 @@ TRACKMENOT.TMNSearch = function() {
         }
     }
 
-
     function formatNum(val) {
         if (val < 10) return '0' + val;
         return val
     }
-
 
     function log(entry) {
         if (disableLogs) return;
@@ -1422,7 +1365,6 @@ TRACKMENOT.TMNSearch = function() {
         });
     }
 
-
     function sendClickEvent() {
         if (prev_engine) {
             cout("About to click on " + prev_engine)
@@ -1431,7 +1373,6 @@ TRACKMENOT.TMNSearch = function() {
             });
         }
     }
-
 
     function handleRequest(request, sender, sendResponse) {
 
@@ -1545,7 +1486,6 @@ TRACKMENOT.TMNSearch = function() {
 
 
     }
-
 
     return {
 
