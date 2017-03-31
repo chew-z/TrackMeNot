@@ -14,7 +14,7 @@
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************************/
 // @flow
-// @FlowNotIssue
+// @flow-NotIssue
 var _ = chrome.i18n.getMessage;
 
 if (!TRACKMENOT) var TRACKMENOT = {};
@@ -439,7 +439,7 @@ TRACKMENOT.TMNSearch = function() {
 
     function randomElement(array) {
         if ( array.length == 0 ) 
-            throw new Error(" randomElement: empty array " + array);
+            throw new Error(" randomElement: empty array " + array.toString());
         else if (array.length == 1)
             return array[0];
         else {
@@ -474,6 +474,7 @@ TRACKMENOT.TMNSearch = function() {
         return Math.floor(box_muller() * (max - min + 1)) + min;
     }
 
+    // randomize order of array elements
     function shuffleArray(a) {
         let currentIndex = a.length, tempValue, randomIndex;
 
@@ -492,7 +493,7 @@ TRACKMENOT.TMNSearch = function() {
     }
 
     // Extracts possible keywords from text
-    // Uppercase followed by more Uppercase - most likely to be a keyword
+    // Uppercase word followed by more Uppercase words - most likely to be a keyword
     // Saddly doesn't work for non-Latin languages - TODO?
     function getKeywords(query) {
         let queryWords = query.split(' ');
@@ -730,7 +731,7 @@ TRACKMENOT.TMNSearch = function() {
     function addQuery(term, queryList) {
         // TODO - this is duplicating some effort from extractQuerries() 
         debug('addQuery: received: ' + term);
-        // @FlowNotIssue
+        // @flow-NotIssue
         let notNLZ = new XRegExp('[^\\p{N}\\p{L}\\p{Z}@\-]+', 'g'); // NLZ - number, letter, separator
         term = XRegExp.replace(term, notNLZ, '');
         term = term.replace(/\s\s+/g, ' ');
@@ -822,7 +823,9 @@ TRACKMENOT.TMNSearch = function() {
 
             if ( topics.length > 0) {
                 let t = randomElement(topics)
+                // @flow-NotIssue
                 debug('nlpQuery: topic: ' + t.text + ' <-- ' + query );
+                // @flow-NotIssue
                 return t.text;
             } else if ( uniqueInteresting.length > 0 ) {
                 let i = randomElement(uniqueInteresting);
@@ -871,7 +874,7 @@ TRACKMENOT.TMNSearch = function() {
             let i = queryset.length;
             let organization = [];
             while(i--) {
-                // @FlowNotIssue
+                // @flow-NotIssue
                 let o = nlp(queryset[i]).organizations().data();
                 // debug(p);
                 let j = o.length;
@@ -889,7 +892,7 @@ TRACKMENOT.TMNSearch = function() {
             let i = queryset.length;
             let person = [];
             while(i--) {
-                // @FlowNotIssue
+                // @flow-NotIssue
                 let p = nlp(queryset[i]).people().data();
                 // debug(p);
                 let j = p.length;
@@ -907,7 +910,7 @@ TRACKMENOT.TMNSearch = function() {
             let i = queryset.length;
             let place = [];
             while(i--) {
-                // @FlowNotIssue
+                // @flow-NotIssue
                 let p = nlp(queryset[i]).places().data();
                 // debug(p);
                 let j = p.length;
@@ -1190,10 +1193,10 @@ TRACKMENOT.TMNSearch = function() {
         if (!enabled) return;
         if (delay > 0) {
             if (!isBursting()) { // randomize to approach target frequency
-                var offset = delay * (Math.random() / 2);
+                var offset = delay * (Math.random() * 0.5);
                 delay = parseInt(delay) + offset;
             } else { // just simple randomize during a burst           
-                delay += delay * (Math.random() - .5);
+                delay += delay * (Math.random() - 0.5);
             }
         }
         if (isBursting()) engine = burstEngine;
@@ -1646,12 +1649,10 @@ TRACKMENOT.TMNSearch = function() {
 
 }();
 
-
-
 chrome.runtime.onMessage.addListener(TRACKMENOT.TMNSearch._handleRequest);
 
 //chrome.tabs.onSelectionChanged.addListener(TRACKMENOT.TMNSearch._hideTMNTab);
 chrome.tabs.onRemoved.addListener(TRACKMENOT.TMNSearch._preserveTMNTab);
-//chrome.windows.onRemoved.addListener(TRACKMENOT.TMNSearch._deleteTabWhenClosing); 
+//chrome.windows.onRemoved.addListener(TRACKMENOT.TMNSearch._deleteTabWhenClosing);
 
 TRACKMENOT.TMNSearch.startTMN();
