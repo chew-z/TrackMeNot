@@ -2,21 +2,21 @@
 "manifest_version": 2,
   "name": "TrackMeNot",
   "version": "0.8.3",
-  "icons": { "16": "icon16.png",
-           "48": "icon32.png"},
+  "icons": { "16": "images/icon16.png",
+           "48": "images/icon32.png"},
   "description": "TMN portage on Chrome",
   "browser_action": {
-    "default_icon": "tmn.png",
-    "default_popup": "tmn_menu.html"
+    "default_icon": "images/tmn.png",
+    "default_popup": "html/tmn_menu.html"
   },
   "background": {
-    "scripts": ["compromise.es6.min.js", "xregexp-all.js", "trackmenot.js"]
+    "scripts": ["lib/compromise.es6.min.js", "lib/xregexp-all.js", "js/trackmenot.js"]
   },
-  "options_page": "options.html",
+  "options_page": "html/options.html",
   "content_scripts": [
     {
       "matches": ["http://*/*","https://*/*"],
-      "js": ["tmn_search.js"],
+      "js": ["js/tmn_search.js"],
       "run_at": "document_start",
       "all_frames" : true
     }

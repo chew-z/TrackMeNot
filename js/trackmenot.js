@@ -253,7 +253,7 @@ TRACKMENOT.TMNSearch = function() {
 
     function openOptionWindow() {
         tabs.open({
-            url: data.url("html/options.html"),
+            url: data.url("options.html"),
             onReady: runScript
         });
     }

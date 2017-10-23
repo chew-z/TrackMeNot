@@ -34,7 +34,7 @@ TRACKMENOT.TMNSearch = function() {
     var engine = 'google';
     var TMNQueries = {};
     var branch = "extensions.trackmenot."
-    var feedList = "http://www.todayonline.com/feed/singapore~http://www.straitstimes.com/news/singapore/rss.xml~http://stackoverflow.com/feeds/tag/android+or+html+or+javascript+or+python~https://news.ycombinator.com/rss~https://trends.google.com/trends/hottrends/atom/feed?pn=p5";
+    var feedList = "http://feeds.musicchartfeeds.com/itunes-pop-chart~http://www.todayonline.com/feed/singapore~http://www.straitstimes.com/news/singapore/rss.xml~http://stackoverflow.com/feeds/tag/android+or+html+or+javascript+or+python~https://news.ycombinator.com/rss~https://trends.google.com/trends/hottrends/atom/feed?pn=p5";
     var tmnLogs = [];
     var disableLogs = false;
     var saveLogs = true;
@@ -42,7 +42,7 @@ TRACKMENOT.TMNSearch = function() {
     var useBlackList = true;
     var useDHSList = false;
     var typeoffeeds = [];
-    var zeitgeist = ["facebook","twitter","snap","instagram","youtube","netflix","amazon","spotify","uber","iphone 7","laptop","games","weather","hotels","guesthouse","flights","deals","cheap","Bali","Thailand","Dominicana","Bangkok","Denpasar","Chiangi","JFK","Heathrow","Los Angeles","Phuket","Pataya","JJ Lin","UEFA","Air Asia","Traveloka","Tiger","Donald Trump","7-Eleven","Lee Chong Wei","Nintendo Switch","Google Pixel 2","Emily Blunt","Elizabeth Debicki","Tom Hiddleston"]
+    var zeitgeist = ["facebook","twitter","snap","instagram","youtube","netflix","amazon","spotify","uber","iphone 7","laptop","games","weather","hotels","guesthouse","flights","deals","cheap","Bali","Thailand","Dominicana","Bangkok","Denpasar","Chiangi","JFK","Heathrow","Los Angeles","Phuket","Pataya","JJ Lin","UEFA","Air Asia","Traveloka","Tiger","Donald Trump","7-Eleven","Lee Chong Wei","Nintendo Switch","Google Pixel","Emily Blunt","Elizabeth Debicki","Tom Hiddleston"]
     var tmn_timeout = 60000;
     var prev_engine = "None"
     var burstEngine = "google";
@@ -62,12 +62,13 @@ TRACKMENOT.TMNSearch = function() {
 
     //var search_script = [data.url("jquery.js"),data.url("tmn_search.js")];
 
-    var skipex = [/mins ago/, /days ago/, /hours ago/, /1 day ago/, /1 hour ago/,
-        /200/i, /201/i, /Thesaurus/i, /Breaking news/, /Latest news/,
-        /Top stories/, /headlines/, /Enjoy/, /Exclusive/,
+    var skipex = new Array(
+        /mins ago/, /days ago/, /hours ago/, /1 day ago/, /1 hour ago/, /200/i, /201/i,
+        /Thesaurus/i, /Breaking news/, /Latest news/, /Top stories/, /headlines/,
+        /Enjoy/, /Exclusive/, 
         /calendar/i, /advanced/i, /click /i, /terms/i, /Groups/i,
         /Images/, /Maps/, /search/i, /cache/i, /similar/i, /&#169;/,
-        /sign in/i, /help/i, /download/i, /print/i, /Books/i, /rss/i,
+        /sign in/i, /help[^Ss]/i, /download/i, /print/i, /Books/i, /rss/i,
         /google/i, /bing/i, /yahoo/i, /aol/i, /html/i, /ask/i, /xRank/,
         /permalink/i, /aggregator/i, /trackback/, /comment/i, /More/,
         /business solutions/i, /result/i, / view /i, /Legal/, /See all/,
@@ -80,7 +81,8 @@ TRACKMENOT.TMNSearch = function() {
         /Developers/, /cashback/, /Health/, /Products/, /QnABeta/,
         /<more>/, /Travel/, /TripAdvisor/, /Personals/, /Local/, /Trademarks/,
         /cache/i, /similar/i, /login/i, /mail/i, /feed/i, /Followers/,
-        /likes/, /Following/, /http/i]
+        /likes/, /Following/, /http/i
+    )
 
     var testAd_google = function(anchorClass, anchorlink) {
         return (anchorlink &&
@@ -121,11 +123,11 @@ TRACKMENOT.TMNSearch = function() {
     var getButton_aol = " var getButton = function (  ) {return document.getElementById('csbbtn1');   }"
     var getButton_baidu = " var getButton = function (  ){ return getElementsByAttrValue(document,'input', 'value', '????' ); }"
 
-    var SearchBox_google = "var searchbox = function( ) { return getElementsByAttrValue(document,'input', 'name', 'q' ); } "
-    var SearchBox_yahoo = "var searchbox = function(  ) { return document.getElementById('yschsp');}"
-    var SearchBox_bing = "var searchbox = function(  ) {return document.getElementById('sb_form_q'); } "
-    var SearchBox_aol = "var searchbox = function(  ) {return document.getElementById('csbquery1');  }"
-    var SearchBox_baidu = "var searchbox = function(  ) {return document.getElementById('kw');}"
+    SearchBox_google = "var searchbox = function( ) { return getElementsByAttrValue(document,'input', 'name', 'q' ); } "
+    SearchBox_yahoo = "var searchbox = function(  ) { return document.getElementById('yschsp');}"
+    SearchBox_bing = "var searchbox = function(  ) {return document.getElementById('sb_form_q'); } "
+    SearchBox_aol = "var searchbox = function(  ) {return document.getElementById('csbquery1');  }"
+    SearchBox_baidu = "var searchbox = function(  ) {return document.getElementById('kw');}"
 
     var suggest_google = ['gsr', 'td', function(elt) {
         return (elt.hasAttribute('class') && elt.getAttribute('class') == 'gac_c')
@@ -253,7 +255,7 @@ TRACKMENOT.TMNSearch = function() {
 
     function openOptionWindow() {
         tabs.open({
-            url: data.url("html/options.html"),
+            url: data.url("options.html"),
             onReady: runScript
         });
     }
@@ -790,136 +792,136 @@ TRACKMENOT.TMNSearch = function() {
     // get little inteligent and try NLP
     // TODO - works but generates too much gibberish 
     function nlpQuery(query) {
-        let interesting = [];
-        let interestingPartOfSpeech = ['Acronym', 'Person', 'City', 'Place', 'Organization'];
-        let ng = []
+            let interesting = [];
+            let interestingPartOfSpeech = ['Acronym', 'Person', 'City', 'Place', 'Organization'];
+            let ng = []
 
-        let text = nlp(query);
-        let terms = text.terms().data();
-        let topics = text.topics().data();
-        debug(terms);
-        debug(topics);
+            let text = nlp(query);
+            let terms = text.terms().data();
+            let topics = text.topics().data();
+            debug(terms);
+            debug(topics);
 
-        for(let j=0; j < terms.length; j++) {
-            debug('nlpQuery: tags: ' + terms[j].text + ' : ' + terms[j].tags.join(' - '));
-            if ( isIntersection( interestingPartOfSpeech, terms[j].tags ) ) {
-                interesting.push( terms[j].text );
+            for(let j=0; j < terms.length; j++) {
+                debug('nlpQuery: tags: ' + terms[j].text + ' : ' + terms[j].tags.join(' - '));
+                if ( isIntersection( interestingPartOfSpeech, terms[j].tags ) ) {
+                    interesting.push( terms[j].text );
+                }
+                if ( terms[j].tags.indexOf( 'Noun' ) > -1 || terms[j].tags.indexOf( 'Gerund' ) > -1 ) {
+                    ng.push( terms[j].text );
+                }
             }
-            if ( terms[j].tags.indexOf( 'Noun' ) > -1 || terms[j].tags.indexOf( 'Gerund' ) > -1 ) {
-                ng.push( terms[j].text );
+
+            let uniqueInteresting = interesting.filter(function(elem, index, self) {
+                return index == self.indexOf(elem);
+            })
+            cout('nlpQuery: Acronym/Person/City/Place/Organization: ' + uniqueInteresting.join(' - '));
+            let uniqueNG = ng.filter(function(elem, index, self) {
+                return index == self.indexOf(elem);
+            })
+            cout('nlpQuery: NounGeround: ' + uniqueNG.join(' - '));
+
+            if ( topics.length > 0) {
+                let t = randomElement(topics)
+                // @flow-NotIssue
+                debug('nlpQuery: topic: ' + t.text + ' <-- ' + query );
+                // @flow-NotIssue
+                return t.text;
+            } else if ( uniqueInteresting.length > 0 ) {
+                let i = randomElement(uniqueInteresting);
+                debug('nlpQuery: interesting: ' + i + ' <-- ' + query );
+                return i;
+            } else {
+                let l = roll_beta_left(1, uniqueNG.length - 1);
+                let n = shuffleArray(uniqueNG).slice(0, l).join(' ');
+                debug('nlpQuery: NG: ' + n + ' <-- ' + query );
+                return n;
             }
-        }
-
-        let uniqueInteresting = interesting.filter(function(elem, index, self) {
-            return index == self.indexOf(elem);
-        })
-        cout('nlpQuery: Acronym/Person/City/Place/Organization: ' + uniqueInteresting.join(' - '));
-        let uniqueNG = ng.filter(function(elem, index, self) {
-            return index == self.indexOf(elem);
-        })
-        cout('nlpQuery: NounGeround: ' + uniqueNG.join(' - '));
-
-        if ( topics.length > 0) {
-            let t = randomElement(topics)
-            // @flow-NotIssue
-            debug('nlpQuery: topic: ' + t.text + ' <-- ' + query );
-            // @flow-NotIssue
-            return t.text;
-        } else if ( uniqueInteresting.length > 0 ) {
-            let i = randomElement(uniqueInteresting);
-            debug('nlpQuery: interesting: ' + i + ' <-- ' + query );
-            return i;
-        } else {
-            let l = roll_beta_left(1, uniqueNG.length - 1);
-            let n = shuffleArray(uniqueNG).slice(0, l).join(' ');
-            debug('nlpQuery: NG: ' + n + ' <-- ' + query );
-            return n;
-        }
     }
 
     // randomly with arbitrary weights - either get part of query, try extracting keywords or select random words
     // TODO - optimize the flow a little
     function getSubQuery(query) {
-        // My fair guess - estimated distribution of typical querry length
-        let queryWords = query.split(' ');
-        let subQuery = query;
-        let keywords = getKeywords(query);
-        // with arbitrary weights - another fair guess
-        if ( Math.random() > 0.5 && keywords.length  > 0 ) {  // try extracting keywords
-            subQuery = randomElement(keywords);
-            cout('getSubQuery: Random keywords: ' + subQuery  + ' <-- ' + query);
-        } else if (Math.random() < 0.7 ) {                  // select NLP words
-            subQuery = nlpQuery(query);
-            cout('getSubQuery: NLP: ' + subQuery  + ' <-- ' + query);
-        } else {                                            // select part of query
-            let queryLength = queryWords.length;
-            let distribution = [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
-            let randomLength = distribution[roll(0, distribution.length - 1)];
-            //  heavily favor starting at beggining of query
-            let randomStart = roll_beta_left(0, queryLength - 1);
-            debug('randomStart: ' + randomStart + ' randomLength: ' + randomLength);
-            // get query sequence or randomLength (with distribution[] like above)
-            subQuery = queryWords.slice(randomStart, Math.min(randomStart + randomLength, queryLength)).join(' ');
-            cout('getSubQuery: Random slice: ' + subQuery + ' <-- ' + query );
-        }
+            // My fair guess - estimated distribution of typical querry length
+            let queryWords = query.split(' ');
+            let subQuery = query;
+            let keywords = getKeywords(query);
+            // with arbitrary weights - another fair guess
+            if ( Math.random() > 0.5 && keywords.length  > 0 ) {  // try extracting keywords
+                    subQuery = randomElement(keywords);
+                    cout('getSubQuery: Random keywords: ' + subQuery  + ' <-- ' + query);
+            } else if (Math.random() < 0.7 ) {                  // select NLP words
+                subQuery = nlpQuery(query);
+                cout('getSubQuery: NLP: ' + subQuery  + ' <-- ' + query);
+            } else {                                            // select part of query
+                let queryLength = queryWords.length;
+                let distribution = [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 8];
+                let randomLength = distribution[roll(0, distribution.length - 1)];
+                //  heavily favor starting at beggining of query
+                let randomStart = roll_beta_left(0, queryLength - 1);
+                debug('randomStart: ' + randomStart + ' randomLength: ' + randomLength);
+                // get query sequence or randomLength (with distribution[] like above)
+                subQuery = queryWords.slice(randomStart, Math.min(randomStart + randomLength, queryLength)).join(' ');
+                cout('getSubQuery: Random slice: ' + subQuery + ' <-- ' + query );
+            }
 
-        return subQuery
-        // shuffle Words, get first few (this is random select), join into query term
-        // randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
+            return subQuery
+            // shuffle Words, get first few (this is random select), join into query term
+            // randomWords = shuffleArray(queryWords).slice(0, randomLength).join(' ');
     }
 
     function randomOrganization(queryset) {
-        let i = queryset.length;
-        let organization = [];
-        while(i--) {
-            // @flow-NotIssue
-            let o = nlp(queryset[i]).organizations().data();
-            // debug(p);
-            let j = o.length;
-            while(j--) {
-                cout(o[j].text);
-                organization.push(o[j].text);
+            let i = queryset.length;
+            let organization = [];
+            while(i--) {
+                // @flow-NotIssue
+                let o = nlp(queryset[i]).organizations().data();
+                // debug(p);
+                let j = o.length;
+                while(j--) {
+                    cout(o[j].text);
+                    organization.push(o[j].text);
+                }
             }
-        }
-        cout(organization);
-        if (organization.length > 0)
-            return randomElement(organization).replace(/^\W+/, '');
+            cout(organization);
+            if (organization.length > 0)
+                return randomElement(organization).replace(/^\W+/, '');
     }
 
     function randomPerson(queryset) {
-        let i = queryset.length;
-        let person = [];
-        while(i--) {
-            // @flow-NotIssue
-            let p = nlp(queryset[i]).people().data();
-            // debug(p);
-            let j = p.length;
-            while(j--) {
-                cout(p[j].text);
-                person.push(p[j].text);
+            let i = queryset.length;
+            let person = [];
+            while(i--) {
+                // @flow-NotIssue
+                let p = nlp(queryset[i]).people().data();
+                // debug(p);
+                let j = p.length;
+                while(j--) {
+                    cout(p[j].text);
+                    person.push(p[j].text);
+                }
             }
-        }
-        cout(person);
-        if (person.length > 0)
-            return randomElement(person).replace(/^\W+/, '');
+            cout(person);
+            if (person.length > 0)
+                return randomElement(person).replace(/^\W+/, '');
     }
 
     function randomPlace(queryset) {
-        let i = queryset.length;
-        let place = [];
-        while(i--) {
-            // @flow-NotIssue
-            let p = nlp(queryset[i]).places().data();
-            // debug(p);
-            let j = p.length;
-            while(j--) {
-                cout(p[j].text);
-                place.push(p[j].text);
+            let i = queryset.length;
+            let place = [];
+            while(i--) {
+                // @flow-NotIssue
+                let p = nlp(queryset[i]).places().data();
+                // debug(p);
+                let j = p.length;
+                while(j--) {
+                    cout(p[j].text);
+                    place.push(p[j].text);
+                }
             }
-        }
-        cout(place);
-        if (place.length > 0)
-            return randomElement(place).replace(/^\W+/, '');
+            cout(place);
+            if (place.length > 0)
+                return randomElement(place).replace(/^\W+/, '');
     }
 
     // here query randomization happens - randomize query type and select random query
@@ -992,7 +994,7 @@ TRACKMENOT.TMNSearch = function() {
         term = chomp(term);
         term = term.replace(/^\s+/, ''); //remove the first space // if (term[0] == ' ') term = term.substr(1); 
         if (Math.random() < 0.8) term = term.toLowerCase(); 
-        cout('getQuery: term: ' + term);
+                cout('getQuery: term: ' + term);
         return term;
     }
 
@@ -1077,9 +1079,9 @@ TRACKMENOT.TMNSearch = function() {
         let url = getEngineById(engine).urlmap;
         // var isIncr = (queryToSend == null);
         if (!queryToSend) { 
-            cout('sendQuery error! queryToSend is null')
-            return;
-        }
+                cout('sendQuery error! queryToSend is null')
+                return;
+            }
 
         if (useTab) {
             if (getTMNTab() == -1) createTab();
